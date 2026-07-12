@@ -136,11 +136,11 @@ const faqs = [
     answer:
       'Timelines depend on credentialing and role requirements, but we follow up quickly after receiving your application.',
   },
-  {
-    question: 'Can I work PRN?',
-    answer:
-      'Yes. Full-time, part-time, and PRN availability are welcome for many roles.',
-  },
+  // {
+  //   question: 'Can I work PRN?',
+  //   answer:
+  //     'Yes. Full-time, part-time, and PRN availability are welcome for many roles.',
+  // },
 ]
 
 function Careers() {
