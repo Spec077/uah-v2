@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import './Home.css'
+import { setPageMeta } from './seo.js'
 
 const heroSlides = [
   {
@@ -23,6 +24,7 @@ const heroSlides = [
 const navLinks = [
   { href: '#services', label: 'Services' },
   { href: '#about', label: 'Mission' },
+  { href: '/careers', label: 'Careers' },
   { href: '#service-area', label: 'Staffing' },
   { href: '#contact', label: 'Contact' },
 ]
@@ -139,16 +141,23 @@ function Home() {
   const isMenuMounted = menuState !== 'closed'
 
   useEffect(() => {
+    setPageMeta({
+      title: 'United Ace Healthcare',
+      description: 'Your Health, Our priority',
+    })
+  }, [])
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       setActiveSlide((currentSlide) => (currentSlide + 1) % heroSlides.length)
-    }, 3500)
+    }, 4000)
 
     return () => window.clearInterval(timer)
   }, [])
 
   useEffect(() => {
     document.body.classList.toggle('menu-open', isMenuMounted)
-
+    
     return () => document.body.classList.remove('menu-open')
   }, [isMenuMounted])
 
@@ -294,8 +303,8 @@ function Home() {
               <a className="button button--primary" href="#contact">
                 Request staffing support
               </a>
-              <a className="button button--ghost" href="tel:+12242844949">
-                (224) 284-4949
+              <a className="button button--ghost" href="/careers">
+                Apply Now
               </a>
             </div>
           </div>

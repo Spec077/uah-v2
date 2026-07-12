@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import Careers from './Careers.jsx'
 import Home from './Home.jsx'
 
 function App() {
@@ -6,6 +7,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/careers" element={<Careers />} />
       </Routes>
     </BrowserRouter>
   )
