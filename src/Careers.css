@@ -246,12 +246,116 @@
   background: var(--card);
 }
 
+.careers-form fieldset {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.careers-form fieldset:disabled {
+  opacity: .68;
+}
+
 .resume-upload input {
   width: 100%;
   border: 1px dashed var(--border);
   border-radius: .5rem;
   margin-top: .25rem;
   padding: .85rem;
+}
+
+.form-submit {
+  align-items: center;
+  gap: .6rem;
+}
+
+.form-submit.is-processing {
+  cursor: wait;
+}
+
+.button-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spinner .75s linear infinite;
+}
+
+.form-status {
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0;
+  padding: .9rem 1rem;
+}
+
+.form-status--submitting,
+.form-status--success {
+  background: color-mix(in oklch, var(--brand-mint) 26%, white);
+  color: var(--foreground);
+}
+
+.form-status--error {
+  background: #fff1f1;
+  border-color: #f1b7b7;
+  color: #8a1f1f;
+}
+
+.application-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1px solid color-mix(in oklch, var(--brand-mint) 52%, var(--border));
+  border-radius: .75rem;
+  background: color-mix(in oklch, var(--brand-mint) 24%, white);
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+}
+
+.application-success__icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+}
+
+.application-success__icon svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.application-success h3 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+}
+
+.application-success p {
+  margin: .45rem 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+@keyframes button-spinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .faq-section {

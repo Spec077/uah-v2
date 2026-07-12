@@ -1,0 +1,226 @@
+import { readFileSync } from 'node:fs'
+
+const RESEND_API_URL = 'https://api.resend.com/emails'
+const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
+const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
+const MAX_RESUME_SIZE = 3 * 1024 * 1024
+const ALLOWED_RESUME_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+
+const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
+const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
+
+function json(res, status, payload) {
+  if (typeof res.status === 'function') {
+    res.status(status)
+  } else {
+    res.statusCode = status
+  }
+
+  res.setHeader('Content-Type', 'application/json')
+  res.end(JSON.stringify(payload))
+}
+
+function empty(res, status) {
+  if (typeof res.status === 'function') {
+    res.status(status)
+  } else {
+    res.statusCode = status
+  }
+
+  res.end()
+}
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function renderTemplate(template, values) {
+  return template.replaceAll(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, key) => escapeHtml(values[key] ?? ''))
+}
+
+function normalizeText(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function firstName(name) {
+  return normalizeText(name).split(/\s+/)[0] || 'there'
+}
+
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+async function readBody(req) {
+  if (req.body && typeof req.body === 'object') {
+    return req.body
+  }
+
+  if (typeof req.body === 'string') {
+    return JSON.parse(req.body)
+  }
+
+  const chunks = []
+
+  for await (const chunk of req) {
+    chunks.push(chunk)
+  }
+
+  const rawBody = Buffer.concat(chunks).toString('utf8')
+  return rawBody ? JSON.parse(rawBody) : {}
+}
+
+function validateResume(resume) {
+  if (!resume) {
+    return null
+  }
+
+  const name = normalizeText(resume.name)
+  const type = normalizeText(resume.type)
+  const content = normalizeText(resume.content)
+  const size = Number(resume.size)
+
+  if (!name || !content || !Number.isFinite(size)) {
+    throw new Error('Resume upload is invalid.')
+  }
+
+  if (size > MAX_RESUME_SIZE) {
+    throw new Error('Resume must be 3 MB or smaller.')
+  }
+
+  if (!ALLOWED_RESUME_TYPES.has(type)) {
+    throw new Error('Resume must be a PDF, DOC, or DOCX file.')
+  }
+
+  return { name, type, content, size }
+}
+
+async function sendEmail(apiKey, payload) {
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const result = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    const message = result?.message || result?.error || 'Resend rejected the email.'
+    throw new Error(message)
+  }
+
+  return result
+}
+
+export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    empty(res, 204)
+    return
+  }
+
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed.' })
+    return
+  }
+
+  const apiKey = process.env.RESEND_KEY
+
+  if (!apiKey) {
+    json(res, 500, { error: 'Email service is not configured.' })
+    return
+  }
+
+  try {
+    const body = await readBody(req)
+    const application = {
+      name: normalizeText(body.name),
+      phone: normalizeText(body.phone),
+      email: normalizeText(body.email),
+      role: normalizeText(body.role),
+      availability: normalizeText(body.availability),
+      experience: normalizeText(body.experience),
+      message: normalizeText(body.message),
+    }
+
+    if (!application.name || !application.phone || !application.email || !application.role) {
+      json(res, 400, { error: 'Please complete all required fields.' })
+      return
+    }
+
+    if (!isEmail(application.email)) {
+      json(res, 400, { error: 'Please enter a valid email address.' })
+      return
+    }
+
+    const resume = validateResume(body.resume)
+    const submittedAt = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Chicago',
+    }).format(new Date())
+
+    const values = {
+      ...application,
+      firstName: firstName(application.name),
+      message: application.message || 'No additional notes provided.',
+      resumeName: resume?.name || 'No resume attached',
+      submittedAt,
+      source: 'Careers Page',
+    }
+
+    const attachments = resume
+      ? [
+          {
+            filename: resume.name,
+            content: resume.content,
+          },
+        ]
+      : []
+
+    await sendEmail(apiKey, {
+      from: FROM_EMAIL,
+      to: [application.email],
+      reply_to: RECRUITER_EMAIL,
+      subject: 'We received your United Ace Healthcare application',
+      html: renderTemplate(applicantTemplate, values),
+      text: `Hi ${values.firstName},\n\nWe received your application for ${application.role}. Our team will review your information and contact you if your background matches a current opening.\n\nUnited Ace Healthcare`,
+    })
+
+    await sendEmail(apiKey, {
+      from: FROM_EMAIL,
+      to: [RECRUITER_EMAIL],
+      reply_to: application.email,
+      subject: `New careers application: ${application.name} - ${application.role}`,
+      html: renderTemplate(recruiterTemplate, values),
+      text: [
+        'New Job Application',
+        '',
+        `Name: ${application.name}`,
+        `Phone: ${application.phone}`,
+        `Email: ${application.email}`,
+        `Role: ${application.role}`,
+        `Availability: ${application.availability}`,
+        `Experience: ${application.experience}`,
+        `Resume: ${values.resumeName}`,
+        `Notes: ${values.message}`,
+      ].join('\n'),
+      attachments,
+    })
+
+    json(res, 200, { ok: true })
+  } catch (error) {
+    console.error(error)
+    json(res, 500, { error: error.message || 'Unable to submit application.' })
+  }
+}

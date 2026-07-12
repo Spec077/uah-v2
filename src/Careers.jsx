@@ -11,6 +11,26 @@ const navLinks = [
 ]
 
 const showPausedSections = false
+const maxResumeSize = 3 * 1024 * 1024
+const allowedResumeTypes = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const result = String(reader.result)
+      resolve(result.includes(',') ? result.split(',').pop() : result)
+    }
+
+    reader.onerror = () => reject(new Error('Unable to read resume file.'))
+    reader.readAsDataURL(file)
+  })
+}
 
 const benefits = [
   {
@@ -145,8 +165,10 @@ const faqs = [
 
 function Careers() {
   const [menuState, setMenuState] = useState('closed')
+  const [applicationStatus, setApplicationStatus] = useState({ type: 'idle', message: '' })
   const isMenuOpen = menuState === 'open'
   const isMenuMounted = menuState !== 'closed'
+  const isSubmitting = applicationStatus.type === 'submitting'
 
   useEffect(() => {
     setPageMeta({
@@ -200,6 +222,71 @@ function Careers() {
 
   const openMenu = () => setMenuState('open')
   const closeMenu = () => setMenuState('closing')
+
+  const handleApplicationSubmit = async (event) => {
+    event.preventDefault()
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const resumeFile = formData.get('resume')
+
+    setApplicationStatus({ type: 'submitting', message: 'Submitting your application...' })
+
+    try {
+      let resume = null
+
+      if (resumeFile instanceof File && resumeFile.size > 0) {
+        if (resumeFile.size > maxResumeSize) {
+          throw new Error('Resume must be 3 MB or smaller.')
+        }
+
+        if (!allowedResumeTypes.has(resumeFile.type)) {
+          throw new Error('Resume must be a PDF, DOC, or DOCX file.')
+        }
+
+        resume = {
+          name: resumeFile.name,
+          type: resumeFile.type,
+          size: resumeFile.size,
+          content: await fileToBase64(resumeFile),
+        }
+      }
+
+      const payload = {
+        name: String(formData.get('name') || '').trim(),
+        phone: String(formData.get('phone') || '').trim(),
+        email: String(formData.get('email') || '').trim(),
+        role: String(formData.get('role') || '').trim(),
+        availability: String(formData.get('availability') || '').trim(),
+        experience: String(formData.get('experience') || '').trim(),
+        message: String(formData.get('message') || '').trim(),
+        resume,
+      }
+
+      const response = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to submit application.')
+      }
+
+      form.reset()
+      setApplicationStatus({
+        type: 'success',
+        message: 'Application submitted. Please check your email for confirmation.',
+      })
+    } catch (error) {
+      setApplicationStatus({
+        type: 'error',
+        message: error.message || 'Unable to submit application. Please try again.',
+      })
+    }
+  }
 
   return (
     <div id="top" className="home-page careers-page">
@@ -385,74 +472,103 @@ function Careers() {
           <div className="container careers-form-wrap">
             <p className="eyebrow">Apply</p>
             <h2>Start your application.</h2>
-            <p>We will follow up after reviewing your information.🫶</p>
+            <p>We will follow up after reviewing your information.</p>
 
-            <form className="contact-form careers-form">
-              <div className="form-grid">
-                <label>
-                  <span>Full name</span>
-                  <input name="name" type="text" autoComplete="name" required />
-                </label>
-                <label>
-                  <span>Phone</span>
-                  <input name="phone" type="tel" autoComplete="tel" required />
-                </label>
-                <label>
-                  <span>Email address</span>
-                  <input name="email" type="email" autoComplete="email" required />
-                </label>
-                <label>
-                  <span>Role interested in</span>
-                  <select name="role" defaultValue="RN" required>
-                    <option>RN</option>
-                    <option>LPN / LVN</option>
-                    <option>CNA / HHA</option>
-                    <option>PT / OT / SLP</option>
-                    <option>Medical Social Worker</option>
-                    <option>Office / Admin</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Availability</span>
-                  <select name="availability" defaultValue="Full-time" required>
-                    <option>Full-time</option>
-                    <option>Part-time</option>
-                    <option>PRN / As needed</option>
-                    <option>Weekends</option>
-                    <option>Evenings / Overnights</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Years of experience</span>
-                  <select name="experience" defaultValue="Less than 1" required>
-                    <option>Less than 1</option>
-                    <option>1-3</option>
-                    <option>3-5</option>
-                    <option>5-10</option>
-                    <option>10+</option>
-                  </select>
-                </label>
+            {applicationStatus.type === 'success' ? (
+              <div className="application-success" role="status" aria-live="polite">
+                <span className="application-success__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </span>
+                <div>
+                  <h3>Application submitted.</h3>
+                  <p>
+                    Thank you for applying. We sent a confirmation email to your inbox, and our team will review your information.
+                  </p>
+                </div>
               </div>
+            ) : (
+              <form className="contact-form careers-form" onSubmit={handleApplicationSubmit}>
+                <fieldset disabled={isSubmitting}>
+                  <div className="form-grid">
+                    <label>
+                      <span>Full name</span>
+                      <input name="name" type="text" autoComplete="name" required />
+                    </label>
+                    <label>
+                      <span>Phone</span>
+                      <input name="phone" type="tel" autoComplete="tel" required />
+                    </label>
+                    <label>
+                      <span>Email address</span>
+                      <input name="email" type="email" autoComplete="email" required />
+                    </label>
+                    <label>
+                      <span>Role interested in</span>
+                      <select name="role" defaultValue="RN" required>
+                        <option>RN</option>
+                        <option>LPN / LVN</option>
+                        <option>CNA / HHA</option>
+                        <option>PT / OT / SLP</option>
+                        <option>Medical Social Worker</option>
+                        <option>Office / Admin</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Availability</span>
+                      <select name="availability" defaultValue="Full-time" required>
+                        <option>Full-time</option>
+                        <option>Part-time</option>
+                        <option>PRN / As needed</option>
+                        <option>Weekends</option>
+                        <option>Evenings / Overnights</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Years of experience</span>
+                      <select name="experience" defaultValue="Less than 1" required>
+                        <option>Less than 1</option>
+                        <option>1-3</option>
+                        <option>3-5</option>
+                        <option>5-10</option>
+                        <option>10+</option>
+                      </select>
+                    </label>
+                  </div>
 
-              <label className="resume-upload">
-                <span>Resume upload (PDF, DOC, DOCX)</span>
-                <input name="resume" type="file" accept=".pdf,.doc,.docx" />
-              </label>
+                  <label className="resume-upload">
+                    <span>Resume upload (PDF, DOC, DOCX)</span>
+                    <input name="resume" type="file" accept=".pdf,.doc,.docx" />
+                  </label>
 
-              <label>
-                <span>Additional notes</span>
-                <textarea
-                  name="message"
-                  rows="4"
-                  maxLength="1500"
-                  placeholder="Certifications, referrals, preferred shifts, etc."
-                />
-              </label>
+                  <label>
+                    <span>Additional notes</span>
+                    <textarea
+                      name="message"
+                      rows="4"
+                      maxLength="1500"
+                      placeholder="Certifications, referrals, preferred shifts, etc."
+                    />
+                  </label>
+                </fieldset>
 
-              <button className="button button--dark" type="submit">
-                Submit application
-              </button>
-            </form>
+                {applicationStatus.message && (
+                  <p className={`form-status form-status--${applicationStatus.type}`} aria-live="polite">
+                    {applicationStatus.message}
+                  </p>
+                )}
+
+                <button
+                  className={`button button--dark form-submit${isSubmitting ? ' is-processing' : ''}`}
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <span className="button-spinner" aria-hidden="true" />}
+                  <span>{isSubmitting ? 'Processing application' : 'Submit application'}</span>
+                </button>
+              </form>
+            )}
           </div>
         </section>
 
@@ -518,7 +634,7 @@ function Careers() {
               </a>
             ))}
           </nav>
-          <p>© 2026 United Ace Healthcare.</p>
+          <p>Copyright 2026 United Ace Healthcare.</p>
         </div>
       </footer>
     </div>

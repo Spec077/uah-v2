@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New Job Application - United Ace Healthcare</title>
+    <style>
+      body { margin: 0; padding: 0; background: #f2f3f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #14121a; }
+      a { color: #bd23cd; text-decoration: none; }
+      .wrap { width: 100%; background: #f2f3f5; padding: 32px 16px; }
+      .card { max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e6e4ea; border-radius: 14px; overflow: hidden; }
+      .top { padding: 22px 28px; border-bottom: 1px solid #eeecf1; display: flex; align-items: center; justify-content: space-between; }
+      .brand-logo { display: block; width: 56px; max-width: 100%; height: auto; }
+      .pill { display: inline-block; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #ffffff; background: #1a1a1a; padding: 6px 10px; border-radius: 999px; font-weight: 700; }
+      .head { padding: 28px 28px 8px; }
+      h1 { font-family: Georgia, "Times New Roman", serif; font-size: 26px; line-height: 1.2; margin: 0; color: #14121a; font-weight: 500; }
+      .sub { font-size: 14px; color: #5a5566; margin: 8px 0 0; line-height: 1.55; }
+      .grid { padding: 20px 28px 8px; }
+      .row { display: table; width: 100%; border-collapse: collapse; }
+      .cell { display: table-cell; width: 50%; padding: 14px 16px; border: 1px solid #eeecf1; background: #fafafb; vertical-align: top; }
+      .cell.left { border-right: none; border-radius: 10px 0 0 0; }
+      .cell.right { border-radius: 0 10px 0 0; }
+      .cell.bl { border-top: none; border-radius: 0 0 0 10px; border-right: none; }
+      .cell.br { border-top: none; border-radius: 0 0 10px 0; }
+      .cell.full { display: block; width: auto; border-top: none; border-radius: 0 0 10px 10px; }
+      .k { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #8a8194; font-weight: 700; margin: 0 0 6px; }
+      .v { font-size: 15px; color: #14121a; margin: 0; font-weight: 600; line-height: 1.55; }
+      .v a { font-weight: 500; }
+      .resume { margin: 20px 28px 0; padding: 16px 18px; border: 1px solid #eeecf1; border-radius: 12px; background: #ffffff; display: flex; align-items: center; gap: 14px; }
+      .fileicon { width: 40px; height: 48px; border-radius: 6px; background: linear-gradient(180deg, #f7edfa, #efd8f5); border: 1px solid #e4c7ee; display: inline-flex; align-items: center; justify-content: center; color: #bd23cd; font-weight: 800; font-size: 11px; letter-spacing: 0.1em; }
+      .rlabel { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #8a8194; font-weight: 700; margin: 0 0 4px; }
+      .rname { margin: 0; font-size: 14px; color: #14121a; font-weight: 600; }
+      .actions { padding: 22px 28px 8px; }
+      .btn { display: inline-block; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; margin: 0 8px 8px 0; border: 1px solid transparent; }
+      .btn.primary { background: #bd23cd; color: #ffffff; }
+      .btn.secondary { background: #ffffff; color: #14121a; border-color: #d9d5df; }
+      .meta { margin: 12px 28px 0; padding: 16px 20px; background: #fafafb; border: 1px solid #eeecf1; border-radius: 10px; font-size: 13px; color: #5a5566; }
+      .meta table { width: 100%; border-collapse: collapse; }
+      .meta td { padding: 6px 0; vertical-align: top; }
+      .meta td.mk { color: #8a8194; text-transform: uppercase; letter-spacing: 0.16em; font-size: 10px; font-weight: 700; width: 40%; }
+      .meta td.mv { color: #14121a; font-weight: 500; }
+      .footer { padding: 20px 28px; margin-top: 20px; border-top: 1px solid #eeecf1; text-align: center; font-size: 12px; color: #8a8194; line-height: 1.6; }
+      @media (max-width: 520px) {
+        .top, .head, .grid, .actions, .footer { padding-left: 20px; padding-right: 20px; }
+        .row, .cell { display: block; width: auto; border-radius: 10px !important; border: 1px solid #eeecf1 !important; margin-bottom: 8px; }
+        h1 { font-size: 22px; }
+        .resume, .meta { margin-left: 16px; margin-right: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="top">
+          <img class="brand-logo" src="https://www.unitedacehealthcare.com/assets/favico.png" alt="United Ace Healthcare" />
+          <span class="pill">New application</span>
+        </div>
+
+        <div class="head">
+          <h1>New Job Application</h1>
+          <p class="sub">A new candidate has submitted an application through the Careers page.</p>
+        </div>
+
+        <div class="grid">
+          <div class="row">
+            <div class="cell left">
+              <p class="k">Full name</p>
+              <p class="v">{{name}}</p>
+            </div>
+            <div class="cell right">
+              <p class="k">Phone number</p>
+              <p class="v"><a href="tel:{{phone}}">{{phone}}</a></p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell left" style="border-top:none;">
+              <p class="k">Email address</p>
+              <p class="v"><a href="mailto:{{email}}">{{email}}</a></p>
+            </div>
+            <div class="cell right" style="border-top:none;">
+              <p class="k">Role interested in</p>
+              <p class="v">{{role}}</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell bl">
+              <p class="k">Availability</p>
+              <p class="v">{{availability}}</p>
+            </div>
+            <div class="cell br">
+              <p class="k">Years of experience</p>
+              <p class="v">{{experience}}</p>
+            </div>
+          </div>
+          <div class="cell full">
+            <p class="k">Additional notes</p>
+            <p class="v">{{message}}</p>
+          </div>
+        </div>
+
+        <div class="resume">
+          <div class="fileicon">CV</div>
+          <div>
+            <p class="rlabel">Resume</p>
+            <p class="rname">{{resumeName}}</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn primary" href="mailto:{{email}}">Email applicant</a>
+          <a class="btn secondary" href="tel:{{phone}}">Call applicant</a>
+        </div>
+
+        <div class="meta">
+          <table role="presentation">
+            <tr><td class="mk">Submitted</td><td class="mv">{{submittedAt}}</td></tr>
+            <tr><td class="mk">Source</td><td class="mv">{{source}}</td></tr>
+          </table>
+        </div>
+
+        <div class="footer">
+          This notification was automatically generated by the United Ace Healthcare Careers form.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
