@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import './Home.css'
 import './Careers.css'
-import { setPageMeta } from './seo.js'
 
 const navLinks = [
   { href: '/#services', label: 'Services' },
@@ -172,16 +172,6 @@ function Careers() {
   const isSubmitting = applicationStatus.type === 'submitting'
 
   useEffect(() => {
-    setPageMeta({
-      title: 'Careers | United Ace Healthcare',
-      description:
-        'Apply for nursing, CNA, LPN, and allied healthcare roles with United Ace Healthcare.',
-      ogDescription:
-        'Join United Ace Healthcare for flexible healthcare roles, responsive support, and trusted care placements.',
-    })
-  }, [])
-
-  useEffect(() => {
     document.body.classList.toggle('menu-open', isMenuMounted)
 
     return () => document.body.classList.remove('menu-open')
@@ -304,7 +294,26 @@ function Careers() {
   }
 
   return (
-    <div id="top" className="home-page careers-page">
+    <>
+      <Helmet>
+        <title>Careers | United Ace Healthcare</title>
+        <meta
+          name="description"
+          content="Apply for nursing, CNA, LPN, and allied healthcare roles with United Ace Healthcare."
+        />
+        <link rel="canonical" href="https://unitedacehealthcare.com/careers" />
+        <meta property="og:title" content="Careers | United Ace Healthcare" />
+        <meta
+          property="og:description"
+          content="Join United Ace Healthcare for flexible healthcare roles, responsive support, and trusted care placements."
+        />
+        <meta property="og:url" content="https://unitedacehealthcare.com/careers" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://unitedacehealthcare.com/og-image.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
+      <div id="top" className="home-page careers-page">
       <header className="site-header">
         <div className="site-header__inner">
           <a href="/" className="brand-link">
@@ -658,7 +667,8 @@ function Careers() {
           <p>Copyright 2026 United Ace Healthcare.</p>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   )
 }
 

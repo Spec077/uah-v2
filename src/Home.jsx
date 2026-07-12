@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import './Home.css'
-import { setPageMeta } from './seo.js'
 
 const heroSlides = [
   {
@@ -141,13 +141,6 @@ function Home() {
   const isMenuMounted = menuState !== 'closed'
 
   useEffect(() => {
-    setPageMeta({
-      title: 'United Ace Healthcare',
-      description: 'Your Health, Our priority',
-    })
-  }, [])
-
-  useEffect(() => {
     const timer = window.setInterval(() => {
       setActiveSlide((currentSlide) => (currentSlide + 1) % heroSlides.length)
     }, 4000)
@@ -203,7 +196,26 @@ function Home() {
   const closeMenu = () => setMenuState('closing')
 
   return (
-    <div id="top" className="home-page">
+    <>
+      <Helmet>
+        <title>United Ace Healthcare | Your Health, Our Priority</title>
+        <meta
+          name="description"
+          content="United Ace Healthcare provides reliable healthcare staffing and compassionate care services."
+        />
+        <link rel="canonical" href="https://unitedacehealthcare.com/" />
+        <meta property="og:title" content="United Ace Healthcare" />
+        <meta
+          property="og:description"
+          content="Reliable healthcare staffing and compassionate care services."
+        />
+        <meta property="og:url" content="https://unitedacehealthcare.com/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://unitedacehealthcare.com/og-image.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
+      <div id="top" className="home-page">
       <header className="site-header">
         <div className="site-header__inner">
           <a href="#top" className="brand-link">
@@ -519,7 +531,8 @@ function Home() {
           {/* <p>© 2026 United Ace Healthcare. Nursing and healthcare staffing agency.</p> */}
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   )
 }
 
