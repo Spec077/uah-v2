@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './Home.css'
 import './Careers.css'
 import { setPageMeta } from './seo.js'
@@ -166,6 +166,7 @@ const faqs = [
 function Careers() {
   const [menuState, setMenuState] = useState('closed')
   const [applicationStatus, setApplicationStatus] = useState({ type: 'idle', message: '' })
+  const applicationSuccessRef = useRef(null)
   const isMenuOpen = menuState === 'open'
   const isMenuMounted = menuState !== 'closed'
   const isSubmitting = applicationStatus.type === 'submitting'
@@ -195,6 +196,20 @@ function Careers() {
 
     return () => window.clearTimeout(timer)
   }, [menuState])
+
+  useEffect(() => {
+    if (applicationStatus.type !== 'success') {
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      applicationSuccessRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+      applicationSuccessRef.current?.focus({ preventScroll: true })
+    })
+  }, [applicationStatus.type])
 
   useEffect(() => {
     const revealNodes = document.querySelectorAll('.careers-page .reveal-on-scroll')
@@ -475,7 +490,13 @@ function Careers() {
             <p>We will follow up after reviewing your information.</p>
 
             {applicationStatus.type === 'success' ? (
-              <div className="application-success" role="status" aria-live="polite">
+              <div
+                className="application-success"
+                ref={applicationSuccessRef}
+                role="status"
+                aria-live="polite"
+                tabIndex="-1"
+              >
                 <span className="application-success__icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24">
                     <path d="M20 6 9 17l-5-5" />
