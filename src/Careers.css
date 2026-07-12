@@ -1,5 +1,5 @@
 .careers-page .site-header {
-  background: color-mix(in oklch, var(--background) 92%, transparent);
+  background: color-mix(in oklch, var(--background) 70%, transparent);
 }
 
 .careers-page .reveal-on-scroll {
