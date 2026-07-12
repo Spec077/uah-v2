@@ -201,17 +201,17 @@ function Home() {
         <title>United Ace Healthcare | Your Health, Our Priority</title>
         <meta
           name="description"
-          content="United Ace Healthcare provides reliable healthcare staffing and compassionate care services."
+          content="Your Health, Our Priority."
         />
         <link rel="canonical" href="https://unitedacehealthcare.com/" />
         <meta property="og:title" content="United Ace Healthcare" />
         <meta
           property="og:description"
-          content="Reliable healthcare staffing and compassionate care services."
+          content="Your Health, Our Priority."
         />
         <meta property="og:url" content="https://unitedacehealthcare.com/" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://unitedacehealthcare.com/og-image.jpg" />
+        {/* <meta property="og:image" content="https://unitedacehealthcare.com/og-image.jpg" /> */}
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
