@@ -339,6 +339,7 @@ function Home() {
             <div>
               <strong>Carpentersville, IL</strong>
               <span>2315 Woodside Drive</span>
+              <a href="tel:+12246710180">+1 (224) 671-0180</a>
               <a href="tel:+12242844949">+1 (224) 284-4949</a>
               <a href="tel:+13127214561">+1 (312) 721-4561</a>
             </div>
@@ -507,6 +508,7 @@ function Home() {
                 </div>
                 <div>
                   <p>Phone</p>
+                  <a href="tel:+12246710180">+1 (224) 671-0180</a>
                   <a href="tel:+12242844949">+1 (224) 284-4949</a>
                   <a href="tel:+13127214561">+1 (312) 721-4561</a>
                 </div>
