@@ -515,6 +515,7 @@ function Home() {
                 <div>
                   <p>Email</p>
                   <a href="mailto:info@unitedacehealthcare.com">info@unitedacehealthcare.com</a>
+                  <a href="mailto:careers@unitedacehealthcare.com">careers@unitedacehealthcare.com</a>
                   <a href="mailto:unitedacehc@gmail.com">unitedacehc@gmail.com</a>
                 </div>
               </div>
