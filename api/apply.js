@@ -3,7 +3,7 @@ import { createApplicationPdf } from './application-pdf.js'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
-const RECRUITER_EMAIL = 'info@unitedacehealthcare.cm'
+const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
 const MAX_RESUME_SIZE = 3 * 1024 * 1024
 const ALLOWED_RESUME_TYPES = new Set([
   'application/pdf',
