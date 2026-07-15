@@ -1,14 +1,58 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import SiteFooter from './components/home/SiteFooter'
+import SiteHeader from './components/home/SiteHeader'
+import { formatUSPhoneNumber } from './utils/formatUSPhoneNumber'
 import './Home.css'
 import './Careers.css'
 
 const navLinks = [
   { href: '/#services', label: 'Services' },
-  { href: '/#about', label: 'Mission' },
+  { href: '/#about', label: 'About' },
   { href: '/careers', label: 'Careers' },
+  { href: '/#process', label: 'Process' },
   { href: '/#contact', label: 'Contact' },
 ]
+
+const ArrowRightIcon = () => (
+  <svg className="arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 12h14" />
+    <path d="m13 6 6 6-6 6" />
+  </svg>
+)
+
+const applicationSteps = [
+  { eyebrow: 'Step 1 of 3', title: 'Basic Information' },
+  { eyebrow: 'Step 2 of 3', title: 'Professional Information' },
+  { eyebrow: 'Step 3 of 3', title: 'Resume & Agreement' },
+]
+
+const applicationSuccessAnimation =
+  'https://lottie.host/582dbd92-15e4-4f9e-b32e-69c26ac28619/AHPBLzwL0i.lottie'
+
+const DotLottieReact = lazy(() =>
+  import('@lottiefiles/dotlottie-react').then((module) => ({
+    default: module.DotLottieReact,
+  })),
+)
+
+const expirationMonths = [
+  ['01', 'Jan'],
+  ['02', 'Feb'],
+  ['03', 'Mar'],
+  ['04', 'Apr'],
+  ['05', 'May'],
+  ['06', 'Jun'],
+  ['07', 'Jul'],
+  ['08', 'Aug'],
+  ['09', 'Sep'],
+  ['10', 'Oct'],
+  ['11', 'Nov'],
+  ['12', 'Dec'],
+]
+
+const currentYear = new Date().getFullYear()
+const expirationYears = Array.from({ length: 16 }, (_, index) => String(currentYear + index))
 
 const showPausedSections = false
 const maxResumeSize = 3 * 1024 * 1024
@@ -166,10 +210,16 @@ const faqs = [
 function Careers() {
   const [menuState, setMenuState] = useState('closed')
   const [applicationStatus, setApplicationStatus] = useState({ type: 'idle', message: '' })
+  const [applicationStep, setApplicationStep] = useState(0)
+  const [phoneValue, setPhoneValue] = useState('')
+  const [licenseExpiration, setLicenseExpiration] = useState({ month: '', year: '' })
+  const applicationFormRef = useRef(null)
   const applicationSuccessRef = useRef(null)
   const isMenuOpen = menuState === 'open'
   const isMenuMounted = menuState !== 'closed'
   const isSubmitting = applicationStatus.type === 'submitting'
+  const isFirstApplicationStep = applicationStep === 0
+  const isFinalApplicationStep = applicationStep === applicationSteps.length - 1
 
   useEffect(() => {
     document.body.classList.toggle('menu-open', isMenuMounted)
@@ -201,37 +251,70 @@ function Careers() {
     })
   }, [applicationStatus.type])
 
-  useEffect(() => {
-    const revealNodes = document.querySelectorAll('.careers-page .reveal-on-scroll')
-
-    if (!revealNodes.length) {
-      return undefined
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible')
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold: 0.16 },
-    )
-
-    revealNodes.forEach((node) => observer.observe(node))
-
-    return () => observer.disconnect()
-  }, [])
-
   const openMenu = () => setMenuState('open')
   const closeMenu = () => setMenuState('closing')
+  const scrollToApplication = () => {
+    closeMenu()
+    window.setTimeout(() => {
+      document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 40)
+  }
+  const validateApplicationStep = (stepIndex = applicationStep) => {
+    const stepNode = applicationFormRef.current?.querySelector(`[data-application-step="${stepIndex}"]`)
+
+    if (!stepNode) {
+      return true
+    }
+
+    const fields = Array.from(stepNode.querySelectorAll('input, select, textarea'))
+    const invalidField = fields.find((field) => !field.checkValidity())
+
+    if (invalidField) {
+      invalidField.reportValidity()
+      return false
+    }
+
+    return true
+  }
+  const scrollApplicationToTop = () => {
+    window.requestAnimationFrame(() => {
+      applicationFormRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+  }
+  const goToNextApplicationStep = () => {
+    if (!validateApplicationStep()) {
+      return
+    }
+
+    setApplicationStep((currentStep) => Math.min(currentStep + 1, applicationSteps.length - 1))
+    scrollApplicationToTop()
+  }
+  const goToPreviousApplicationStep = () => {
+    setApplicationStep((currentStep) => Math.max(currentStep - 1, 0))
+    scrollApplicationToTop()
+  }
+  const handlePhoneChange = (event) => {
+    setPhoneValue(formatUSPhoneNumber(event.target.value))
+  }
+  const handleLicenseExpirationChange = (field) => (event) => {
+    setLicenseExpiration((currentExpiration) => ({
+      ...currentExpiration,
+      [field]: event.target.value,
+    }))
+  }
 
   const handleApplicationSubmit = async (event) => {
     event.preventDefault()
 
     const form = event.currentTarget
+
+    if (!validateApplicationStep(applicationSteps.length - 1)) {
+      return
+    }
+
     const formData = new FormData(form)
     const resumeFile = formData.get('resume')
 
@@ -261,9 +344,17 @@ function Careers() {
         name: String(formData.get('name') || '').trim(),
         phone: String(formData.get('phone') || '').trim(),
         email: String(formData.get('email') || '').trim(),
+        city: String(formData.get('city') || '').trim(),
+        state: String(formData.get('state') || '').trim(),
         role: String(formData.get('role') || '').trim(),
+        employmentType: String(formData.get('employmentType') || '').trim(),
         availability: String(formData.get('availability') || '').trim(),
         experience: String(formData.get('experience') || '').trim(),
+        licenseState: String(formData.get('licenseState') || '').trim(),
+        licenseNumber: String(formData.get('licenseNumber') || '').trim(),
+        licenseExpiration: String(formData.get('licenseExpiration') || '').trim(),
+        workAuthorized: String(formData.get('workAuthorized') || '').trim(),
+        accuracyCertified: formData.get('accuracyCertified') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
         resume,
       }
@@ -281,6 +372,9 @@ function Careers() {
       }
 
       form.reset()
+      setPhoneValue('')
+      setLicenseExpiration({ month: '', year: '' })
+      setApplicationStep(0)
       setApplicationStatus({
         type: 'success',
         message: 'Application submitted. Please check your email for confirmation.',
@@ -314,86 +408,31 @@ function Careers() {
       </Helmet>
 
       <div id="top" className="home-page careers-page">
-      <header className="site-header">
-        <div className="site-header__inner">
-          <a href="/" className="brand-link">
-            <img className="brand-logo" src="/assets/uah-logo.png" alt="United Ace Healthcare" />
-            <span>United Ace Healthcare</span>
-          </a>
-
-          <nav className="site-nav" aria-label="Primary navigation">
-            {navLinks.map((link) => (
-              <a href={link.href} key={link.href}>
-                {link.label}
-              </a>
-            ))}
-            <a className="button button--primary button--small" href="tel:+12242844949">
-              +1 (224) 284-4949
-            </a>
-          </nav>
-
-          <button
-            className="menu-toggle"
-            type="button"
-            aria-label="Open navigation menu"
-            aria-expanded={isMenuOpen}
-            aria-controls="mobile-menu"
-            onClick={openMenu}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-      </header>
-
-      {isMenuMounted && (
-        <div id="mobile-menu" className={`mobile-menu${isMenuOpen ? ' is-open' : ''}`}>
-          <div className="mobile-menu__bar">
-            <a href="/" className="brand-link" onClick={closeMenu}>
-              <img className="brand-logo" src="/assets/uah-logo.png" alt="United Ace Healthcare" />
-              <span>United Ace Healthcare</span>
-            </a>
-            <button className="menu-close" type="button" aria-label="Close navigation menu" onClick={closeMenu}>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m6 6 12 12" />
-                <path d="m18 6-12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <nav className="mobile-menu__nav" aria-label="Mobile navigation">
-            {navLinks.map((link) => (
-              <a href={link.href} key={link.href} onClick={closeMenu}>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="mobile-menu__actions">
-            <a className="button button--primary" href="#apply" onClick={closeMenu}>
-              Apply now
-            </a>
-            <a className="button button--dark" href="tel:+12242844949" onClick={closeMenu}>
-              +1 (224) 284-4949
-            </a>
-          </div>
-        </div>
-      )}
+      <SiteHeader
+        ArrowRightIcon={ArrowRightIcon}
+        brandHref="/"
+        isMenuMounted={isMenuMounted}
+        isMenuOpen={isMenuOpen}
+        isScrolled
+        mobileCta={{ href: '#apply', label: 'Start application', onClick: scrollToApplication }}
+        navLinks={navLinks}
+        onCloseMenu={closeMenu}
+        onOpenMenu={openMenu}
+      />
 
       <main>
         <section className="careers-hero">
           <div className="container careers-hero__grid">
-            <div className="careers-hero__content reveal-on-scroll">
+            <div className="careers-hero__content">
               <p className="eyebrow">Careers at United Ace Healthcare</p>
-              <h1>Bring your care to the patients who need it most.</h1>
+              <h1>Join our healthcare team.</h1>
               <p>
-                We staff nurses, CNAs, LPNs, and allied professionals with flexible
-                schedules, real coordinator support, and placements in trusted care settings.
+                Join our network of compassionate healthcare professionals. Our initial
+                application takes approximately 3-5 minutes to complete.
               </p>
               <div className="hero__actions">
                 <a className="button button--primary" href="#apply">
-                  <span>Apply now</span>
+                  <span>Start your application</span>
                   <svg className="button-arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M5 12h14" />
                     <path d="m13 6 6 6-6 6" />
@@ -410,7 +449,7 @@ function Careers() {
 
         {/* Temporarily hidden: Why work with us section. */}
         {showPausedSections && (
-          <section className="section container reveal-on-scroll">
+          <section className="section container">
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Why work with us</p>
@@ -434,7 +473,7 @@ function Careers() {
           </section>
         )}
 
-        <section className="section section--accent reveal-on-scroll">
+        <section className="section section--accent">
           <div className="container">
             <div className="section-intro">
               <div>
@@ -472,7 +511,7 @@ function Careers() {
 
         {/* Temporarily hidden: Requirements section. */}
         {showPausedSections && (
-          <section className="section container reveal-on-scroll">
+          <section className="section container">
             <div className="requirements-grid">
               <div>
                 <p className="eyebrow">Requirements</p>
@@ -492,11 +531,15 @@ function Careers() {
           </section>
         )}
 
-        <section id="apply" className="section section--accent reveal-on-scroll">
+        <section id="apply" className="section section--accent">
           <div className="container careers-form-wrap">
-            <p className="eyebrow">Apply</p>
-            <h2>Start your application.</h2>
-            <p>We will follow up after reviewing your information.</p>
+            <p className="eyebrow">Start Your Application</p>
+            <h2>Apply to United Ace Healthcare.</h2>
+            <p>
+              This first step is intentionally short. If your qualifications match our
+              current opportunities, our recruitment team will contact you with the remaining
+              employment paperwork.
+            </p>
 
             {applicationStatus.type === 'success' ? (
               <div
@@ -506,81 +549,226 @@ function Careers() {
                 aria-live="polite"
                 tabIndex="-1"
               >
-                <span className="application-success__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                </span>
-                <div>
+                <div className="application-success__animation" aria-hidden="true">
+                  <Suspense fallback={<div className="application-success__animation-fallback" />}>
+                    <DotLottieReact src={applicationSuccessAnimation} loop autoplay />
+                  </Suspense>
+                </div>
+                <div className="application-success__message">
                   <h3>Application submitted.</h3>
                   <p>
                     Thank you for applying. We sent a confirmation email to your inbox, and our team will review your information.
+                    If your qualifications match our current opportunities, our recruitment team will contact you with the next steps.
                   </p>
                 </div>
               </div>
             ) : (
-              <form className="contact-form careers-form" onSubmit={handleApplicationSubmit}>
+              <form
+                className="contact-form careers-form"
+                ref={applicationFormRef}
+                noValidate
+                onSubmit={handleApplicationSubmit}
+              >
+                <ol className="application-stepper" aria-label="Application progress">
+                  {applicationSteps.map((step, index) => (
+                    <li
+                      className={index === applicationStep ? 'is-active' : undefined}
+                      aria-current={index === applicationStep ? 'step' : undefined}
+                      key={step.title}
+                    >
+                      <span>{index + 1}</span>
+                      <strong>{step.title}</strong>
+                    </li>
+                  ))}
+                </ol>
+
                 <fieldset disabled={isSubmitting}>
-                  <div className="form-grid">
-                    <label>
-                      <span>Full name</span>
-                      <input name="name" type="text" autoComplete="name" required />
-                    </label>
-                    <label>
-                      <span>Phone</span>
-                      <input name="phone" type="tel" autoComplete="tel" required />
-                    </label>
-                    <label>
-                      <span>Email address</span>
-                      <input name="email" type="email" autoComplete="email" required />
-                    </label>
-                    <label>
-                      <span>Role interested in</span>
-                      <select name="role" defaultValue="RN" required>
-                        <option>RN</option>
-                        <option>LPN / LVN</option>
-                        <option>CNA / HHA</option>
-                        <option>PT / OT / SLP</option>
-                        <option>Medical Social Worker</option>
-                        <option>Office / Admin</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span>Availability</span>
-                      <select name="availability" defaultValue="Full-time" required>
-                        <option>Full-time</option>
-                        <option>Part-time</option>
-                        <option>PRN / As needed</option>
-                        <option>Weekends</option>
-                        <option>Evenings / Overnights</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span>Years of experience</span>
-                      <select name="experience" defaultValue="Less than 1" required>
-                        <option>Less than 1</option>
-                        <option>1-3</option>
-                        <option>3-5</option>
-                        <option>5-10</option>
-                        <option>10+</option>
-                      </select>
-                    </label>
+                  <div
+                    className={`careers-form__group application-step-panel${applicationStep === 0 ? ' is-active' : ''}`}
+                    data-application-step="0"
+                  >
+                    <h3>Basic Information</h3>
+                    <div className="form-grid">
+                      <label>
+                        <span>Full name</span>
+                        <input name="name" type="text" autoComplete="name" placeholder="Jane Smith" required />
+                      </label>
+                      <label>
+                        <span>Phone number</span>
+                        <input
+                          name="phone"
+                          type="tel"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          placeholder="(224) 284-4949"
+                          value={phoneValue}
+                          onChange={handlePhoneChange}
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>Email address</span>
+                        <input
+                          name="email"
+                          type="email"
+                          autoComplete="email"
+                          inputMode="email"
+                          placeholder="jane@example.com"
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>City</span>
+                        <input name="city" type="text" autoComplete="address-level2" placeholder="Carpentersville" required />
+                      </label>
+                      <label>
+                        <span>State</span>
+                        <input
+                          name="state"
+                          type="text"
+                          autoComplete="address-level1"
+                          defaultValue="IL"
+                          placeholder="IL"
+                          maxLength="2"
+                          required
+                        />
+                      </label>
+                    </div>
                   </div>
 
-                  <label className="resume-upload">
-                    <span>Resume upload (PDF, DOC, DOCX)</span>
-                    <input name="resume" type="file" accept=".pdf,.doc,.docx" />
-                  </label>
+                  <div
+                    className={`careers-form__group application-step-panel${applicationStep === 1 ? ' is-active' : ''}`}
+                    data-application-step="1"
+                  >
+                    <h3>Professional Information</h3>
+                    <div className="form-grid">
+                      <label>
+                        <span>Role applying for</span>
+                        <select name="role" defaultValue="RN" required>
+                          <option>RN</option>
+                          <option>LPN</option>
+                          <option>CNA</option>
+                          <option>Caregiver</option>
+                          <option>Other</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Employment type</span>
+                        <select name="employmentType" defaultValue="Full-time" required>
+                          <option>Full-time</option>
+                          <option>Part-time</option>
+                          <option>PRN / Per Diem</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Availability</span>
+                        <select name="availability" defaultValue="" required>
+                          <option value="" disabled>
+                            Select availability
+                          </option>
+                          <option>Immediate start</option>
+                          <option>Weekdays</option>
+                          <option>Weekends</option>
+                          <option>Evenings</option>
+                          <option>Nights</option>
+                          <option>Flexible</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Years of experience</span>
+                        <select name="experience" defaultValue="Less than 1" required>
+                          <option>Less than 1</option>
+                          <option>1-3</option>
+                          <option>3-5</option>
+                          <option>5-10</option>
+                          <option>10+</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Current license state</span>
+                        <input name="licenseState" type="text" placeholder="IL" maxLength="2" required />
+                      </label>
+                      <label>
+                        <span>License number</span>
+                        <input name="licenseNumber" type="text" placeholder="Optional for some roles" />
+                      </label>
+                      <label>
+                        <span>License expiration</span>
+                        <div className="license-expiration-field">
+                          <select
+                            aria-label="License expiration month"
+                            value={licenseExpiration.month}
+                            onChange={handleLicenseExpirationChange('month')}
+                          >
+                            <option value="">Month</option>
+                            {expirationMonths.map(([value, label]) => (
+                              <option value={value} key={value}>
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label="License expiration year"
+                            value={licenseExpiration.year}
+                            onChange={handleLicenseExpirationChange('year')}
+                          >
+                            <option value="">Year</option>
+                            {expirationYears.map((year) => (
+                              <option value={year} key={year}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            name="licenseExpiration"
+                            type="hidden"
+                            value={
+                              licenseExpiration.month && licenseExpiration.year
+                                ? `${licenseExpiration.year}-${licenseExpiration.month}`
+                                : ''
+                            }
+                          />
+                        </div>
+                      </label>
+                      <fieldset className="inline-fieldset inline-fieldset--compact">
+                        <legend>Authorized to work in the US?</legend>
+                        <label className="radio-option">
+                          <input name="workAuthorized" type="radio" value="Yes" required />
+                          <span>Yes</span>
+                        </label>
+                        <label className="radio-option">
+                          <input name="workAuthorized" type="radio" value="No" />
+                          <span>No</span>
+                        </label>
+                      </fieldset>
+                    </div>
+                  </div>
 
-                  <label>
-                    <span>Additional notes</span>
-                    <textarea
-                      name="message"
-                      rows="4"
-                      maxLength="1500"
-                      placeholder="Certifications, referrals, preferred shifts, etc."
-                    />
-                  </label>
+                  <div
+                    className={`careers-form__group application-step-panel${applicationStep === 2 ? ' is-active' : ''}`}
+                    data-application-step="2"
+                  >
+                    <h3>Resume & Agreement</h3>
+                    <div className="form-grid">
+                      <label className="resume-upload">
+                        <span>Upload resume (optional PDF, DOC, DOCX)</span>
+                        <input name="resume" type="file" accept=".pdf,.doc,.docx" />
+                      </label>
+                      <label>
+                        <span>Additional notes</span>
+                        <textarea
+                          name="message"
+                          rows="4"
+                          maxLength="1500"
+                          placeholder="Certifications, referrals, preferred shifts, or anything else helpful."
+                        />
+                      </label>
+                      <label className="agreement-check">
+                        <input name="accuracyCertified" type="checkbox" required />
+                        <span>I certify that the information submitted is accurate to the best of my knowledge.</span>
+                      </label>
+                    </div>
+                  </div>
                 </fieldset>
 
                 {applicationStatus.message && (
@@ -589,20 +777,43 @@ function Careers() {
                   </p>
                 )}
 
-                <button
-                  className={`button button--dark form-submit${isSubmitting ? ' is-processing' : ''}`}
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <span className="button-spinner" aria-hidden="true" />}
-                  <span>{isSubmitting ? 'Processing application' : 'Submit application'}</span>
-                </button>
+                <div className="application-step-actions">
+                  <button
+                    className="button application-back-button"
+                    type="button"
+                    disabled={isFirstApplicationStep || isSubmitting}
+                    onClick={goToPreviousApplicationStep}
+                  >
+                    <ArrowRightIcon />
+                    <span>Back</span>
+                  </button>
+                  {isFinalApplicationStep ? (
+                    <button
+                      className={`button button--primary form-submit${isSubmitting ? ' is-processing' : ''}`}
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting && <span className="button-spinner" aria-hidden="true" />}
+                      <span>{isSubmitting ? 'Processing application' : 'Submit application'}</span>
+                    </button>
+                  ) : (
+                    <button className="button button--primary" type="button" onClick={goToNextApplicationStep}>
+                      <span>Continue</span>
+                      <ArrowRightIcon />
+                    </button>
+                  )}
+                </div>
+                <ul className="application-reassurance" aria-label="Application details">
+                  <li>Takes less than 5 minutes</li>
+                  <li>Resume optional</li>
+                  <li>No lengthy paperwork until you are selected to move forward</li>
+                </ul>
               </form>
             )}
           </div>
         </section>
 
-        <section className="section container faq-section reveal-on-scroll">
+        <section className="section container faq-section">
           <p className="eyebrow">FAQ</p>
           <h2>Candidate questions we hear the most.</h2>
           <div className="faq-list">
@@ -622,7 +833,7 @@ function Careers() {
           </div>
         </section>
 
-        <section id="recruiting" className="recruiting-section reveal-on-scroll">
+        <section id="recruiting" className="recruiting-section">
           <div className="container recruiting-grid">
             <div>
               <p className="eyebrow eyebrow--light">Recruiting</p>
@@ -651,22 +862,7 @@ function Careers() {
         </section>
       </main>
 
-      <footer className="site-footer">
-        <div className="container site-footer__inner">
-          <a href="/" className="brand-link">
-            <img className="brand-logo" src="/assets/uah-logo.png" alt="" />
-            <span>United Ace Healthcare</span>
-          </a>
-          <nav className="footer-nav" aria-label="Footer navigation">
-            {navLinks.map((link) => (
-              <a href={link.href} key={link.href}>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-          <p>Copyright 2026 United Ace Healthcare.</p>
-        </div>
-      </footer>
+      <SiteFooter navLinks={navLinks} />
       </div>
     </>
   )

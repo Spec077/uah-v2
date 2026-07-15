@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { createApplicationPdf } from './application-pdf.js'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
@@ -103,6 +104,15 @@ function validateResume(resume) {
   return { name, type, content, size }
 }
 
+function attachmentName(name) {
+  const slug = normalizeText(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  return `united-ace-application-${slug || 'applicant'}.pdf`
+}
+
 async function sendEmail(apiKey, payload) {
   const response = await fetch(RESEND_API_URL, {
     method: 'POST',
@@ -147,13 +157,34 @@ export default async function handler(req, res) {
       name: normalizeText(body.name),
       phone: normalizeText(body.phone),
       email: normalizeText(body.email),
+      city: normalizeText(body.city),
+      state: normalizeText(body.state),
       role: normalizeText(body.role),
+      employmentType: normalizeText(body.employmentType),
       availability: normalizeText(body.availability),
       experience: normalizeText(body.experience),
+      licenseState: normalizeText(body.licenseState),
+      licenseNumber: normalizeText(body.licenseNumber),
+      licenseExpiration: normalizeText(body.licenseExpiration),
+      workAuthorized: normalizeText(body.workAuthorized),
+      accuracyCertified: normalizeText(body.accuracyCertified),
       message: normalizeText(body.message),
     }
 
-    if (!application.name || !application.phone || !application.email || !application.role) {
+    if (
+      !application.name ||
+      !application.phone ||
+      !application.email ||
+      !application.city ||
+      !application.state ||
+      !application.role ||
+      !application.employmentType ||
+      !application.availability ||
+      !application.experience ||
+      !application.licenseState ||
+      !application.workAuthorized ||
+      !application.accuracyCertified
+    ) {
       json(res, 400, { error: 'Please complete all required fields.' })
       return
     }
@@ -164,6 +195,7 @@ export default async function handler(req, res) {
     }
 
     const resume = validateResume(body.resume)
+
     const submittedAt = new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
@@ -174,9 +206,17 @@ export default async function handler(req, res) {
       ...application,
       firstName: firstName(application.name),
       message: application.message || 'No additional notes provided.',
-      resumeName: resume?.name || 'No resume attached',
+      licenseNumber: application.licenseNumber || 'Not provided',
+      licenseExpiration: application.licenseExpiration || 'Not provided',
+      resumeName: resume?.name || 'No resume uploaded',
       submittedAt,
       source: 'Careers Page',
+    }
+
+    const applicationPdf = await createApplicationPdf(values, { submittedAt })
+    const applicationPdfAttachment = {
+      filename: attachmentName(application.name),
+      content: applicationPdf.toString('base64'),
     }
 
     const attachments = resume
@@ -195,6 +235,7 @@ export default async function handler(req, res) {
       subject: 'We received your United Ace Healthcare application',
       html: renderTemplate(applicantTemplate, values),
       text: `Hi ${values.firstName},\n\nWe received your application for ${application.role}. Our team will review your information and contact you if your background matches a current opening.\n\nUnited Ace Healthcare`,
+      attachments: [applicationPdfAttachment],
     })
 
     await sendEmail(apiKey, {
@@ -209,13 +250,20 @@ export default async function handler(req, res) {
         `Name: ${application.name}`,
         `Phone: ${application.phone}`,
         `Email: ${application.email}`,
+        `City/State: ${application.city}, ${application.state}`,
         `Role: ${application.role}`,
+        `Employment Type: ${application.employmentType}`,
         `Availability: ${application.availability}`,
         `Experience: ${application.experience}`,
+        `Current License State: ${application.licenseState}`,
+        `License Number: ${values.licenseNumber}`,
+        `License Expiration: ${values.licenseExpiration}`,
+        `Authorized to Work in US: ${application.workAuthorized}`,
+        `Accuracy Certified: ${application.accuracyCertified}`,
         `Resume: ${values.resumeName}`,
         `Notes: ${values.message}`,
       ].join('\n'),
-      attachments,
+      attachments: [applicationPdfAttachment, ...attachments],
     })
 
     json(res, 200, { ok: true })

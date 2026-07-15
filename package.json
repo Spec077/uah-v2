@@ -8,12 +8,16 @@
     "dev:vite": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pdf:sample": "node scripts/generate-sample-application-pdf.mjs"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.19.9",
+    "pdfkit": "^0.19.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-helmet-async": "^3.0.0",
+    "react-progressive-blur": "^1.0.6",
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
