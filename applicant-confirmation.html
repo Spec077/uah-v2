@@ -15,13 +15,6 @@
       .eyebrow { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; /*color: #bd23cd;*/color: transparent; font-weight: 700; margin: 0 0 0px; }
       h1 { font-family: Georgia, "Times New Roman", serif; font-size: 30px; line-height: 1.15; margin: 0 0 8px; color: #1a1a1a; font-weight: 500; }
       .lede { font-size: 16px; line-height: 1.6; color: #4b4655; margin: 16px 0 0; }
-      .summary { margin: 8px 0px 0; border: 1px solid #ece6f2; border-radius: 12px; background: #faf7fc; }
-      .summary h2 { font-family: Georgia, serif; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: #1a1a1a; margin: 0; padding: 18px 20px; border-bottom: 1px solid #ece6f2; font-weight: 600; }
-      table.kv { width: 100%; border-collapse: collapse; }
-      table.kv td { padding: 12px 20px; font-size: 14px; vertical-align: top; border-bottom: 1px solid #f0eaf5; }
-      table.kv tr:last-child td { border-bottom: none; }
-      td.k { color: #7a7285; width: 42%; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 600; }
-      td.v { color: #1a1a1a; font-weight: 500; }
       .callout { margin: 24px 32px; padding: 20px 22px; background: #f7edfa; border-left: 4px solid #bd23cd; border-radius: 0; }
       .callout p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; color: #3a3244; }
       .callout p:last-child { margin-bottom: 0; }
@@ -32,8 +25,8 @@
       .footer a { color: #dca7eb; }
       .divider { height: 1px; background: #ece6f2; margin: 0 32px; }
       @media (max-width: 480px) {
-        .header, .hero, .support, .callout, .summary { padding-left: 22px; padding-right: 22px; }
-        .callout, .summary { margin-left: 16px; margin-right: 16px; }
+        .header, .hero, .support, .callout { padding-left: 22px; padding-right: 22px; }
+        .callout { margin-left: 16px; margin-right: 16px; }
         h1 { font-size: 26px; }
       }
     </style>
@@ -51,21 +44,6 @@
           <p class="lede">
             We received your application for United Ace Healthcare. We will review your submission carefully and will be in touch if your qualifications match a current opportunity.
           </p>
-        </div>
-
-        <div class="summary">
-          <h2>Application summary</h2>
-          <table class="kv" role="presentation">
-            <tr><td class="k">Full name</td><td class="v">{{name}}</td></tr>
-            <tr><td class="k">Email</td><td class="v">{{email}}</td></tr>
-            <tr><td class="k">Phone</td><td class="v">{{phone}}</td></tr>
-            <tr><td class="k">Location</td><td class="v">{{city}}, {{state}}</td></tr>
-            <tr><td class="k">Position applied for</td><td class="v">{{role}}</td></tr>
-            <tr><td class="k">Employment type</td><td class="v">{{employmentType}}</td></tr>
-            <tr><td class="k">Availability</td><td class="v">{{availability}}</td></tr>
-            <tr><td class="k">Years of experience</td><td class="v">{{experience}}</td></tr>
-            <tr><td class="k">License state</td><td class="v">{{licenseState}}</td></tr>
-          </table>
         </div>
 
         <div class="callout">

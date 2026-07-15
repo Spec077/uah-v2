@@ -185,7 +185,9 @@ export async function createApplicationPdf(application, options = {}) {
   drawWideField(doc, 'Additional notes', notes, left, y, 504, notesHeight)
   y += notesHeight + rowGap
   drawField(doc, 'Accuracy certified', application.accuracyCertified, left, y, col)
-  drawField(doc, 'Resume', application.resumeName || 'No resume uploaded', left + col + gap, y, col)
+  drawField(doc, 'Privacy policy accepted', application.privacyPolicyAccepted, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Resume', application.resumeName || 'No resume uploaded', left, y, col)
 
   doc
     .font('Helvetica')

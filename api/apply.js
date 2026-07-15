@@ -3,7 +3,7 @@ import { createApplicationPdf } from './application-pdf.js'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
-const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
+const RECRUITER_EMAIL = 'info@unitedacehealthcare.cm'
 const MAX_RESUME_SIZE = 3 * 1024 * 1024
 const ALLOWED_RESUME_TYPES = new Set([
   'application/pdf',
@@ -168,6 +168,7 @@ export default async function handler(req, res) {
       licenseExpiration: normalizeText(body.licenseExpiration),
       workAuthorized: normalizeText(body.workAuthorized),
       accuracyCertified: normalizeText(body.accuracyCertified),
+      privacyPolicyAccepted: normalizeText(body.privacyPolicyAccepted),
       message: normalizeText(body.message),
     }
 
@@ -183,7 +184,8 @@ export default async function handler(req, res) {
       !application.experience ||
       !application.licenseState ||
       !application.workAuthorized ||
-      !application.accuracyCertified
+      !application.accuracyCertified ||
+      !application.privacyPolicyAccepted
     ) {
       json(res, 400, { error: 'Please complete all required fields.' })
       return
@@ -247,21 +249,8 @@ export default async function handler(req, res) {
       text: [
         'New Job Application',
         '',
-        `Name: ${application.name}`,
-        `Phone: ${application.phone}`,
-        `Email: ${application.email}`,
-        `City/State: ${application.city}, ${application.state}`,
-        `Role: ${application.role}`,
-        `Employment Type: ${application.employmentType}`,
-        `Availability: ${application.availability}`,
-        `Experience: ${application.experience}`,
-        `Current License State: ${application.licenseState}`,
-        `License Number: ${values.licenseNumber}`,
-        `License Expiration: ${values.licenseExpiration}`,
-        `Authorized to Work in US: ${application.workAuthorized}`,
-        `Accuracy Certified: ${application.accuracyCertified}`,
-        `Resume: ${values.resumeName}`,
-        `Notes: ${values.message}`,
+        'A new candidate submitted an application through the Careers page.',
+        'See the attached application PDF for the full submission details.',
       ].join('\n'),
       attachments: [applicationPdfAttachment, ...attachments],
     })

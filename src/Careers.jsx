@@ -9,8 +9,7 @@ import './Careers.css'
 
 const navLinks = [
   { href: '/#services', label: 'Services' },
-  { href: '/#about', label: 'About' },
-  { href: '/careers', label: 'Careers' },
+  { href: '/about', label: 'About' },
   { href: '/#process', label: 'Process' },
   { href: '/#contact', label: 'Contact' },
 ]
@@ -54,6 +53,60 @@ const expirationMonths = [
 
 const currentYear = new Date().getFullYear()
 const expirationYears = Array.from({ length: 16 }, (_, index) => String(currentYear + index))
+
+const usStates = [
+  ['AL', 'Alabama'],
+  ['AK', 'Alaska'],
+  ['AZ', 'Arizona'],
+  ['AR', 'Arkansas'],
+  ['CA', 'California'],
+  ['CO', 'Colorado'],
+  ['CT', 'Connecticut'],
+  ['DE', 'Delaware'],
+  ['DC', 'District of Columbia'],
+  ['FL', 'Florida'],
+  ['GA', 'Georgia'],
+  ['HI', 'Hawaii'],
+  ['ID', 'Idaho'],
+  ['IL', 'Illinois'],
+  ['IN', 'Indiana'],
+  ['IA', 'Iowa'],
+  ['KS', 'Kansas'],
+  ['KY', 'Kentucky'],
+  ['LA', 'Louisiana'],
+  ['ME', 'Maine'],
+  ['MD', 'Maryland'],
+  ['MA', 'Massachusetts'],
+  ['MI', 'Michigan'],
+  ['MN', 'Minnesota'],
+  ['MS', 'Mississippi'],
+  ['MO', 'Missouri'],
+  ['MT', 'Montana'],
+  ['NE', 'Nebraska'],
+  ['NV', 'Nevada'],
+  ['NH', 'New Hampshire'],
+  ['NJ', 'New Jersey'],
+  ['NM', 'New Mexico'],
+  ['NY', 'New York'],
+  ['NC', 'North Carolina'],
+  ['ND', 'North Dakota'],
+  ['OH', 'Ohio'],
+  ['OK', 'Oklahoma'],
+  ['OR', 'Oregon'],
+  ['PA', 'Pennsylvania'],
+  ['RI', 'Rhode Island'],
+  ['SC', 'South Carolina'],
+  ['SD', 'South Dakota'],
+  ['TN', 'Tennessee'],
+  ['TX', 'Texas'],
+  ['UT', 'Utah'],
+  ['VT', 'Vermont'],
+  ['VA', 'Virginia'],
+  ['WA', 'Washington'],
+  ['WV', 'West Virginia'],
+  ['WI', 'Wisconsin'],
+  ['WY', 'Wyoming'],
+]
 
 const showPausedSections = false
 const maxResumeSize = 3 * 1024 * 1024
@@ -388,6 +441,7 @@ function Careers() {
         licenseExpiration: String(formData.get('licenseExpiration') || '').trim(),
         workAuthorized: String(formData.get('workAuthorized') || '').trim(),
         accuracyCertified: formData.get('accuracyCertified') === 'on' ? 'Yes' : '',
+        privacyPolicyAccepted: formData.get('privacyPolicyAccepted') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
         resume,
       }
@@ -444,14 +498,12 @@ function Careers() {
       <SiteHeader
         ArrowRightIcon={ArrowRightIcon}
         brandHref="/"
-        isHeaderCtaVisible={isHeroOutOfSight}
         isMenuMounted={isMenuMounted}
         isMenuOpen={isMenuOpen}
         isScrolled
         mobileCta={{ href: '#apply', label: 'Start application', onClick: scrollToApplication }}
         navLinks={navLinks}
         onCloseMenu={closeMenu}
-        onHeaderCtaClick={scrollToApplication}
         onNavLinkClick={handleNavLinkClick}
         onOpenMenu={openMenu}
       />
@@ -479,7 +531,6 @@ function Careers() {
                 </a>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -659,15 +710,13 @@ function Careers() {
                       </label>
                       <label>
                         <span>State</span>
-                        <input
-                          name="state"
-                          type="text"
-                          autoComplete="address-level1"
-                          defaultValue="IL"
-                          placeholder="IL"
-                          maxLength="2"
-                          required
-                        />
+                        <select name="state" autoComplete="address-level1" defaultValue="IL" required>
+                          {usStates.map(([value, label]) => (
+                            <option value={value} key={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </div>
                   </div>
@@ -722,7 +771,13 @@ function Careers() {
                       </label>
                       <label>
                         <span>Current license state</span>
-                        <input name="licenseState" type="text" placeholder="IL" maxLength="2" required />
+                        <select name="licenseState" defaultValue="IL" required>
+                          {usStates.map(([value, label]) => (
+                            <option value={value} key={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                       <label>
                         <span>License number</span>
@@ -803,6 +858,13 @@ function Careers() {
                         <input name="accuracyCertified" type="checkbox" required />
                         <span>I certify that the information submitted is accurate to the best of my knowledge.</span>
                       </label>
+                      <label className="agreement-check">
+                        <input name="privacyPolicyAccepted" type="checkbox" required />
+                        <span>
+                          I have read and accept the privacy policy and agree that United Ace Healthcare may use my
+                          information to review and respond to my application.
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </fieldset>
@@ -839,11 +901,10 @@ function Careers() {
                     </button>
                   )}
                 </div>
-                <ul className="application-reassurance" aria-label="Application details">
-                  <li>Takes less than 5 minutes</li>
-                  <li>Resume optional</li>
-                  <li>No lengthy paperwork until you are selected to move forward</li>
-                </ul>
+                <p className="application-reassurance">
+                  By completing and submitting this application, you agree that United Ace Healthcare may use the
+                  information provided to review your qualifications and contact you about employment opportunities.
+                </p>
               </form>
             )}
           </div>

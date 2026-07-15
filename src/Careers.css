@@ -1,4 +1,5 @@
 .careers-page {
+  background: var(--background);
   font-family: var(--font-sans);
 }
 
@@ -26,9 +27,7 @@
 .careers-hero {
   overflow: hidden;
   border-bottom: 1px solid var(--border);
-  background:
-    linear-gradient(135deg, color-mix(in oklch, var(--brand-lavender) 32%, transparent), transparent 54%),
-    linear-gradient(180deg, var(--background), color-mix(in oklch, var(--accent) 26%, var(--background)));
+  background: color-mix(in oklch, var(--accent) 18%, var(--background));
 }
 
 .careers-hero__grid {
@@ -63,7 +62,7 @@
   margin: 1rem 0 0;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: clamp(3.6rem, 8.5vw, 6.8rem);
+  font-size: clamp(3rem, 6.8vw, 5.4rem);
   font-weight: 560;
   letter-spacing: 0;
   line-height: .92;
@@ -379,8 +378,28 @@
 }
 
 .application-step-panel[data-application-step="2"] .form-grid label:nth-child(2),
-.application-step-panel[data-application-step="2"] .form-grid label:nth-child(3) {
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(3),
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(4) {
   grid-column: 1 / -1;
+}
+
+.application-step-panel[data-application-step="2"] {
+  width: min(100%, 58rem);
+}
+
+.application-step-panel[data-application-step="2"] .agreement-check {
+  width: 100%;
+}
+
+.application-step-panel[data-application-step="2"] .agreement-check span {
+  max-width: none;
+  font-size: .86rem;
+  font-weight: 450;
+  line-height: 1.34;
+}
+
+.application-step-panel[data-application-step="2"] .agreement-check + .agreement-check {
+  margin-top: -.55rem;
 }
 
 .careers-form__group > h3 {
@@ -454,6 +473,22 @@
   font-weight: 520;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.careers-form label:not(.radio-option) > span:first-child,
+.careers-form .inline-fieldset legend {
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.careers-form label:not(.radio-option):has(input:required) > span:first-child::after,
+.careers-form label:has(select:required) > span:first-child::after,
+.careers-form label:has(textarea:required) > span:first-child::after,
+.careers-form .inline-fieldset:has(input:required) legend::after {
+  content: " *";
+  color: #d92d20;
+  font-weight: 800;
 }
 
 .radio-option {
@@ -541,8 +576,9 @@
 
 .resume-upload input {
   width: 100%;
-  border: 1px dashed var(--border);
-  border-radius: .5rem;
+  /* border: 1px dashed var(--border); */
+  border: none;
+  /* border-radius: .5rem; */
   margin-top: .25rem;
   padding: .85rem;
 }
@@ -576,20 +612,13 @@
 }
 
 .application-reassurance {
-  justify-content: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: .65rem 1rem;
-  list-style: none;
-  margin: 1rem 0 0;
+  max-width: 44rem;
+  margin: 1rem auto 0;
   padding: 0;
   color: var(--muted-foreground);
   font-size: .84rem;
-}
-
-.application-reassurance li {
-  position: relative;
-  padding-left: 1.25rem;
+  line-height: 1.6;
+  text-align: center;
 }
 
 .application-reassurance li::before {
@@ -771,6 +800,7 @@
 
 .faq-section {
   max-width: 58rem;
+  margin-block: clamp(2rem, 5vw, 4rem);
 }
 
 .faq-list {
@@ -1014,8 +1044,22 @@
 
   .application-step-panel[data-application-step="0"] .form-grid label:nth-child(3),
   .application-step-panel[data-application-step="2"] .form-grid label:nth-child(2),
-  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(3) {
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(3),
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(4) {
     grid-column: auto;
+  }
+
+  .application-step-panel[data-application-step="2"] .agreement-check {
+    gap: .55rem;
+  }
+
+  .application-step-panel[data-application-step="2"] .agreement-check span {
+    font-size: .8rem;
+    line-height: 1.28;
+  }
+
+  .application-step-panel[data-application-step="2"] .agreement-check + .agreement-check {
+    margin-top: -.2rem;
   }
 
   .inline-fieldset--compact {
@@ -1082,7 +1126,7 @@
   }
 
   .careers-hero__content h1 {
-    font-size: clamp(3rem, 13vw, 4.4rem);
+    font-size: clamp(2.6rem, 11vw, 3.7rem);
     line-height: .94;
   }
 

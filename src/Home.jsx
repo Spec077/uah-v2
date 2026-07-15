@@ -11,7 +11,7 @@ import './Home.css'
 
 const navLinks = [
   { href: '#services', label: 'Services' },
-  { href: '#about', label: 'About' },
+  { href: '/about', label: 'About' },
   { href: '/careers', label: 'Careers' },
   { href: '#process', label: 'Process' },
   { href: '#contact', label: 'Contact' },
@@ -661,9 +661,9 @@ function Home() {
                   your facility.
                 </p>
               </div>
-              <a className="button button--light" href="tel:+12242844949">
+              {/* <a className="button button--light" href="tel:+12242844949">
                 Call +1 (224) 284-4949
-              </a>
+              </a> */}
             </div>
           </section>
 

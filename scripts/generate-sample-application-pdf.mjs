@@ -19,6 +19,7 @@ const sampleApplication = {
   licenseExpiration: '2028-06',
   workAuthorized: 'Yes',
   accuracyCertified: 'Yes',
+  privacyPolicyAccepted: 'Yes',
   message:
     'BLS certified. Available for weekday day shifts and occasional weekends. Interested in home health and skilled nursing assignments.',
   resumeName: 'No resume uploaded',

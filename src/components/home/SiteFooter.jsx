@@ -10,7 +10,7 @@ const whoWeServeLinks = [
 
 const footerNavLinks = [
   { href: '/', label: 'Home' },
-  { href: '/#about', label: 'About' },
+  { href: '/about', label: 'About' },
   { href: '/#services', label: 'Services' },
   { href: '/#process', label: 'Process' },
   { href: '/#contact', label: 'Contact' },
@@ -33,9 +33,9 @@ function SiteFooter() {
               healthcare providers across Illinois with reliable staffing solutions built on
               trust, quality, and excellence.
             </p>
-            <a className="footer-cta" href="/#contact">
+            {/* <a className="footer-cta" href="/#contact">
               Get Started
-            </a>
+            </a> */}
           </div>
 
           <div className="site-footer__link-column">
@@ -61,6 +61,7 @@ function SiteFooter() {
             <address>
               <span>Illinois, United States</span>
               <a href="mailto:info@unitedacehealthcare.com">info@unitedacehealthcare.com</a>
+              <a href="mailto:unitedacehc@gmail.com">unitedacehc@gmail.com</a>
             </address>
           </div>
         </div>
