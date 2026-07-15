@@ -1,12 +1,16 @@
 function SiteHeader({
   ArrowRightIcon,
   brandHref = '#top',
+  headerCtaLabel = 'Get started',
   isMenuMounted,
   isMenuOpen,
   isScrolled,
+  isHeaderCtaVisible = false,
   mobileCta,
   navLinks,
   onCloseMenu,
+  onHeaderCtaClick,
+  onNavLinkClick,
   onOpenMenu,
   onRequestStaffing,
 }) {
@@ -21,15 +25,18 @@ function SiteHeader({
 
           <nav className="site-nav" aria-label="Primary navigation">
             {navLinks.map((link) => (
-              <a href={link.href} key={link.href}>
+              <a href={link.href} key={link.href} onClick={(event) => onNavLinkClick?.(event, link.href)}>
                 {link.label}
               </a>
             ))}
           </nav>
 
-          <a className="nav-phone" href="tel:+12242844949">
-            +1 (224) 284-4949
-          </a>
+          {isHeaderCtaVisible && (
+            <button className="nav-cta" type="button" onClick={onHeaderCtaClick}>
+              <span>{headerCtaLabel}</span>
+              <ArrowRightIcon />
+            </button>
+          )}
 
           <button
             className={`menu-toggle${isMenuOpen ? ' is-open' : ''}`}
@@ -51,7 +58,7 @@ function SiteHeader({
           <div className="mobile-menu__panel">
             <nav className="mobile-menu__nav" aria-label="Mobile navigation">
               {navLinks.map((link) => (
-                <a href={link.href} key={link.href} onClick={onCloseMenu}>
+                <a href={link.href} key={link.href} onClick={(event) => onNavLinkClick?.(event, link.href)}>
                   {link.label}
                 </a>
               ))}

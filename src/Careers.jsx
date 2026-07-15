@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import SiteFooter from './components/home/SiteFooter'
 import SiteHeader from './components/home/SiteHeader'
 import { formatUSPhoneNumber } from './utils/formatUSPhoneNumber'
+import { smoothScrollHashClick, smoothScrollToTarget } from './utils/smoothScroll'
 import './Home.css'
 import './Careers.css'
 
@@ -212,7 +213,9 @@ function Careers() {
   const [applicationStatus, setApplicationStatus] = useState({ type: 'idle', message: '' })
   const [applicationStep, setApplicationStep] = useState(0)
   const [phoneValue, setPhoneValue] = useState('')
+  const [isHeroOutOfSight, setIsHeroOutOfSight] = useState(false)
   const [licenseExpiration, setLicenseExpiration] = useState({ month: '', year: '' })
+  const heroRef = useRef(null)
   const applicationFormRef = useRef(null)
   const applicationSuccessRef = useRef(null)
   const isMenuOpen = menuState === 'open'
@@ -238,26 +241,59 @@ function Careers() {
   }, [menuState])
 
   useEffect(() => {
+    let frame = 0
+
+    const updateHeroVisibility = () => {
+      frame = 0
+      const heroBounds = heroRef.current?.getBoundingClientRect()
+      setIsHeroOutOfSight(Boolean(heroBounds && heroBounds.bottom <= 0))
+    }
+
+    const handleViewportChange = () => {
+      if (!frame) {
+        frame = window.requestAnimationFrame(updateHeroVisibility)
+      }
+    }
+
+    updateHeroVisibility()
+    window.addEventListener('scroll', handleViewportChange, { passive: true })
+    window.addEventListener('resize', handleViewportChange)
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame)
+      }
+      window.removeEventListener('scroll', handleViewportChange)
+      window.removeEventListener('resize', handleViewportChange)
+    }
+  }, [])
+
+  useEffect(() => {
     if (applicationStatus.type !== 'success') {
       return
     }
 
     window.requestAnimationFrame(() => {
-      applicationSuccessRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
+      smoothScrollToTarget(applicationSuccessRef.current, { block: 'center' })
       applicationSuccessRef.current?.focus({ preventScroll: true })
     })
   }, [applicationStatus.type])
 
   const openMenu = () => setMenuState('open')
   const closeMenu = () => setMenuState('closing')
-  const scrollToApplication = () => {
+  const scrollToApplication = (event) => {
+    event?.preventDefault()
     closeMenu()
     window.setTimeout(() => {
-      document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      smoothScrollToTarget('apply', { updateHash: true })
     }, 40)
+  }
+  const handleNavLinkClick = (event, href) => {
+    const didScroll = smoothScrollHashClick(event, href)
+
+    if (didScroll && isMenuMounted) {
+      closeMenu()
+    }
   }
   const validateApplicationStep = (stepIndex = applicationStep) => {
     const stepNode = applicationFormRef.current?.querySelector(`[data-application-step="${stepIndex}"]`)
@@ -278,10 +314,7 @@ function Careers() {
   }
   const scrollApplicationToTop = () => {
     window.requestAnimationFrame(() => {
-      applicationFormRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
+      smoothScrollToTarget(applicationFormRef.current)
     })
   }
   const goToNextApplicationStep = () => {
@@ -411,17 +444,20 @@ function Careers() {
       <SiteHeader
         ArrowRightIcon={ArrowRightIcon}
         brandHref="/"
+        isHeaderCtaVisible={isHeroOutOfSight}
         isMenuMounted={isMenuMounted}
         isMenuOpen={isMenuOpen}
         isScrolled
         mobileCta={{ href: '#apply', label: 'Start application', onClick: scrollToApplication }}
         navLinks={navLinks}
         onCloseMenu={closeMenu}
+        onHeaderCtaClick={scrollToApplication}
+        onNavLinkClick={handleNavLinkClick}
         onOpenMenu={openMenu}
       />
 
       <main>
-        <section className="careers-hero">
+        <section className="careers-hero" ref={heroRef}>
           <div className="container careers-hero__grid">
             <div className="careers-hero__content">
               <p className="eyebrow">Careers at United Ace Healthcare</p>
@@ -862,7 +898,7 @@ function Careers() {
         </section>
       </main>
 
-      <SiteFooter navLinks={navLinks} />
+      <SiteFooter />
       </div>
     </>
   )

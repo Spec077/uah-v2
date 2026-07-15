@@ -6,6 +6,7 @@ import SiteFooter from './components/home/SiteFooter'
 import SiteHeader from './components/home/SiteHeader'
 import StartModal from './components/home/StartModal'
 import { formatUSPhoneNumber } from './utils/formatUSPhoneNumber'
+import { smoothScrollHashClick, smoothScrollToTarget } from './utils/smoothScroll'
 import './Home.css'
 
 const navLinks = [
@@ -192,10 +193,12 @@ function Home() {
   const isMenuOpen = menuState === 'open'
   const isMenuMounted = menuState !== 'closed'
   const pageRef = useRef(null)
+  const heroRef = useRef(null)
   const heroContentRef = useRef(null)
   const trustRef = useRef(null)
   const contactFormRef = useRef(null)
   const hasTypedTrustRef = useRef(false)
+  const [isHeroOutOfSight, setIsHeroOutOfSight] = useState(false)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -211,6 +214,34 @@ function Home() {
     window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    let frame = 0
+
+    const updateHeroVisibility = () => {
+      frame = 0
+      const heroBounds = heroRef.current?.getBoundingClientRect()
+      setIsHeroOutOfSight(Boolean(heroBounds && heroBounds.bottom <= 0))
+    }
+
+    const handleViewportChange = () => {
+      if (!frame) {
+        frame = window.requestAnimationFrame(updateHeroVisibility)
+      }
+    }
+
+    updateHeroVisibility()
+    window.addEventListener('scroll', handleViewportChange, { passive: true })
+    window.addEventListener('resize', handleViewportChange)
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame)
+      }
+      window.removeEventListener('scroll', handleViewportChange)
+      window.removeEventListener('resize', handleViewportChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -376,9 +407,16 @@ function Home() {
     }
 
     window.setTimeout(() => {
-      contactFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      smoothScrollToTarget(contactFormRef.current, { block: 'center', updateHash: true })
       window.history.replaceState(null, '', '#contact')
     }, 40)
+  }
+  const handleNavLinkClick = (event, href) => {
+    const didScroll = smoothScrollHashClick(event, href)
+
+    if (didScroll && isMenuMounted) {
+      closeMenu()
+    }
   }
 
   return (
@@ -403,11 +441,14 @@ function Home() {
       <div id="top" className="home-page" ref={pageRef}>
         <SiteHeader
           ArrowRightIcon={ArrowRightIcon}
+          isHeaderCtaVisible={isHeroOutOfSight}
           isMenuMounted={isMenuMounted}
           isMenuOpen={isMenuOpen}
           isScrolled={isScrolled}
           navLinks={navLinks}
           onCloseMenu={closeMenu}
+          onHeaderCtaClick={() => setIsStartModalOpen(true)}
+          onNavLinkClick={handleNavLinkClick}
           onOpenMenu={() => setMenuState('open')}
           onRequestStaffing={handleRequestStaffingClick}
         />
@@ -427,6 +468,7 @@ function Home() {
           <HomeHero
             ArrowRightIcon={ArrowRightIcon}
             activeSlide={activeSlide}
+            heroRef={heroRef}
             heroContentRef={heroContentRef}
             heroSlides={heroSlides}
             loadedImages={loadedImages}
@@ -703,7 +745,7 @@ function Home() {
             </div>
           </section>
         </main>
-        <SiteFooter navLinks={navLinks} />
+        <SiteFooter />
       </div>
     </>
   )

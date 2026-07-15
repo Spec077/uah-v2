@@ -15,7 +15,7 @@
 }
 
 .careers-page .site-nav a:hover,
-.careers-page .nav-phone:hover {
+.careers-page .nav-cta:hover {
   color: var(--brand);
 }
 
@@ -891,17 +891,8 @@
   word-break: break-word;
 }
 
-.recruiting-details a:hover,
-.footer-nav a:hover {
+.recruiting-details a:hover {
   color: var(--brand-lavender);
-}
-
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .75rem 1.5rem;
-  color: color-mix(in oklch, var(--background) 70%, transparent);
-  font-size: var(--text-xs);
 }
 
 @media (max-width: 900px) {

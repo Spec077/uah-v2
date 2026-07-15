@@ -1,6 +1,7 @@
 function HomeHero({
   ArrowRightIcon,
   activeSlide,
+  heroRef,
   heroContentRef,
   heroSlides,
   loadedImages,
@@ -9,7 +10,11 @@ function HomeHero({
   setActiveSlide,
 }) {
   return (
-    <section className="hero" aria-label="United Ace Healthcare nursing and healthcare staffing">
+    <section
+      className="hero"
+      ref={heroRef}
+      aria-label="United Ace Healthcare nursing and healthcare staffing"
+    >
       <div className="hero__media" aria-hidden="true">
         {heroSlides.map((slide, index) => (
           <img
