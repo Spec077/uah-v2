@@ -182,6 +182,7 @@ function Home() {
   const [menuState, setMenuState] = useState('closed')
   const [isScrolled, setIsScrolled] = useState(false)
   const [phoneValue, setPhoneValue] = useState('')
+  const [inquiryStatus, setInquiryStatus] = useState({ type: 'idle', message: '' })
   const [isStartModalOpen, setIsStartModalOpen] = useState(false)
   const [typedTrustText, setTypedTrustText] = useState(() =>
     typeof window !== 'undefined' &&
@@ -215,6 +216,19 @@ function Home() {
 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    if (inquiryStatus.type !== 'success') {
+      return undefined
+    }
+
+    window.requestAnimationFrame(() => contactFormRef.current?.focus({ preventScroll: true }))
+    const resetTimer = window.setTimeout(() => {
+      setInquiryStatus({ type: 'idle', message: '' })
+    }, 4000)
+
+    return () => window.clearTimeout(resetTimer)
+  }, [inquiryStatus.type])
 
   useEffect(() => {
     let frame = 0
@@ -396,6 +410,42 @@ function Home() {
   }
   const handlePhoneChange = (event) => {
     setPhoneValue(formatUSPhoneNumber(event.target.value))
+  }
+  const handleInquirySubmit = async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const formData = new FormData(form)
+
+    setInquiryStatus({ type: 'submitting', message: 'Sending your inquiry...' })
+
+    try {
+      const response = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: String(formData.get('name') || '').trim(),
+          phone: String(formData.get('phone') || '').trim(),
+          email: String(formData.get('email') || '').trim(),
+          inquiryType: String(formData.get('inquiry') || '').trim(),
+          message: String(formData.get('message') || '').trim(),
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) throw new Error(result.error || 'Unable to submit inquiry.')
+
+      form.reset()
+      setPhoneValue('')
+      setInquiryStatus({
+        type: 'success',
+        message: 'Your inquiry has been submitted. Our team will follow up within one business day.',
+      })
+    } catch (error) {
+      setInquiryStatus({
+        type: 'error',
+        message: error.message || 'Unable to submit inquiry. Please try again.',
+      })
+    }
   }
   const handleRequestStaffingClick = (event) => {
     event.preventDefault()
@@ -690,7 +740,31 @@ function Home() {
                 </div>
               </div>
 
-              <form className="contact-form" data-reveal style={{ '--delay': '120ms' }} ref={contactFormRef}>
+              {inquiryStatus.type === 'success' ? (
+                <div
+                  className="contact-form inquiry-success"
+                  ref={contactFormRef}
+                  role="status"
+                  tabIndex="-1"
+                >
+                  <span className="inquiry-success__icon" aria-hidden="true">✓</span>
+                  <p className="eyebrow">Inquiry submitted</p>
+                  <h3>Thank you for contacting us.</h3>
+                  <p>{inquiryStatus.message}</p>
+                  <button
+                    className="button button--outline button--outline-dark"
+                    type="button"
+                    onClick={() => setInquiryStatus({ type: 'idle', message: '' })}
+                  >
+                    Send another inquiry
+                  </button>
+                </div>
+              ) : (
+              <form
+                className="contact-form"
+                ref={contactFormRef}
+                onSubmit={handleInquirySubmit}
+              >
                 <div className="form-grid">
                   <label>
                     <span>Full name</span>
@@ -738,10 +812,16 @@ function Home() {
                     required
                   />
                 </label>
-                <button className="button button--primary" type="submit">
-                  Submit inquiry
+                {inquiryStatus.message && (
+                  <p className={`inquiry-form-status inquiry-form-status--${inquiryStatus.type}`} aria-live="polite">
+                    {inquiryStatus.message}
+                  </p>
+                )}
+                <button className="button button--primary" type="submit" disabled={inquiryStatus.type === 'submitting'}>
+                  {inquiryStatus.type === 'submitting' ? 'Sending inquiry...' : 'Submit inquiry'}
                 </button>
               </form>
+              )}
             </div>
           </section>
         </main>
