@@ -52,6 +52,10 @@ function normalizeText(value) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function normalizeList(value) {
+  return Array.isArray(value) ? value.map(normalizeText).filter(Boolean).join(', ') : normalizeText(value)
+}
+
 function firstName(name) {
   return normalizeText(name).split(/\s+/)[0] || 'there'
 }
@@ -161,12 +165,36 @@ export default async function handler(req, res) {
       state: normalizeText(body.state),
       role: normalizeText(body.role),
       employmentType: normalizeText(body.employmentType),
-      availability: normalizeText(body.availability),
+      startDate: normalizeText(body.startDate),
+      shifts: normalizeList(body.shifts),
+      weeklyHours: normalizeText(body.weeklyHours),
+      serviceAreas: normalizeText(body.serviceAreas),
+      reliableTransportation: normalizeText(body.reliableTransportation),
       experience: normalizeText(body.experience),
+      education: normalizeText(body.education),
       licenseState: normalizeText(body.licenseState),
       licenseNumber: normalizeText(body.licenseNumber),
       licenseExpiration: normalizeText(body.licenseExpiration),
+      licenseStanding: normalizeText(body.licenseStanding),
+      certifications: normalizeList(body.certifications),
+      otherCertification: normalizeText(body.otherCertification),
+      languages: normalizeText(body.languages),
+      essentialDuties: normalizeText(body.essentialDuties),
       workAuthorized: normalizeText(body.workAuthorized),
+      careExperience: normalizeList(body.careExperience),
+      recentEmployer: normalizeText(body.recentEmployer),
+      recentJobTitle: normalizeText(body.recentJobTitle),
+      employmentDates: normalizeText(body.employmentDates),
+      employmentResponsibilities: normalizeText(body.employmentResponsibilities),
+      reasonForLeaving: normalizeText(body.reasonForLeaving),
+      mayContactEmployer: normalizeText(body.mayContactEmployer),
+      previousUah: normalizeText(body.previousUah),
+      previousUahDetails: normalizeText(body.previousUahDetails),
+      referenceName: normalizeText(body.referenceName),
+      referenceRelationship: normalizeText(body.referenceRelationship),
+      referencePhone: normalizeText(body.referencePhone),
+      referenceEmail: normalizeText(body.referenceEmail),
+      referralSource: normalizeText(body.referralSource),
       accuracyCertified: normalizeText(body.accuracyCertified),
       privacyPolicyAccepted: normalizeText(body.privacyPolicyAccepted),
       message: normalizeText(body.message),
@@ -180,10 +208,17 @@ export default async function handler(req, res) {
       !application.state ||
       !application.role ||
       !application.employmentType ||
-      !application.availability ||
+      !application.startDate ||
+      !application.weeklyHours ||
+      !application.serviceAreas ||
+      !application.reliableTransportation ||
       !application.experience ||
+      !application.education ||
       !application.licenseState ||
+      !application.licenseStanding ||
+      !application.essentialDuties ||
       !application.workAuthorized ||
+      !application.previousUah ||
       !application.accuracyCertified ||
       !application.privacyPolicyAccepted
     ) {

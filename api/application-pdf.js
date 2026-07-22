@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs'
 import PDFDocument from 'pdfkit'
 
-const brand = '#bd23cd'
 const ink = '#18121f'
 const muted = '#6f6878'
 const border = '#e8e2ec'
@@ -166,14 +165,67 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Role applying for', application.role, left, y, col)
   drawField(doc, 'Employment type', application.employmentType, left + col + gap, y, col)
   y += fieldHeight + rowGap
-  drawField(doc, 'Availability', application.availability, left, y, col)
-  drawField(doc, 'Years of experience', application.experience, left + col + gap, y, col)
+  drawField(doc, 'Available start date', application.startDate, left, y, col)
+  drawField(doc, 'Hours available per week', application.weeklyHours, left + col + gap, y, col)
   y += fieldHeight + rowGap
+  drawField(doc, 'Available shifts', application.shifts, left, y, col)
+  drawField(doc, 'Service areas', application.serviceAreas, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Years of experience', application.experience, left, y, col)
+  drawField(doc, 'Education / credential', application.education, left + col + gap, y, col)
+
+  y += fieldHeight + 24
+  y = ensureSpace(doc, y, 250)
+  drawSectionTitle(doc, 'Credentials & Eligibility', y)
+  y += 26
   drawField(doc, 'Current license state', application.licenseState, left, y, col)
   drawField(doc, 'License number', application.licenseNumber, left + col + gap, y, col)
   y += fieldHeight + rowGap
   drawField(doc, 'License expiration', application.licenseExpiration, left, y, col)
-  drawField(doc, 'Authorized to work in the US', application.workAuthorized, left + col + gap, y, col)
+  drawField(doc, 'License in good standing', application.licenseStanding, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Certifications', application.certifications, left, y, col)
+  drawField(doc, 'Other certification', application.otherCertification, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Languages', application.languages, left, y, col)
+  drawField(doc, 'Reliable transportation', application.reliableTransportation, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Authorized to work in the US', application.workAuthorized, left, y, col)
+  drawField(doc, 'Can perform essential duties', application.essentialDuties, left + col + gap, y, col)
+
+  y += fieldHeight + 24
+  y = ensureSpace(doc, y, 300)
+  drawSectionTitle(doc, 'Experience & Employment', y)
+  y += 26
+  const careHeight = noteHeight(doc, application.careExperience, 504)
+  drawWideField(doc, 'Types of care experience', application.careExperience, left, y, 504, careHeight)
+  y += careHeight + rowGap
+  drawField(doc, 'Most recent employer', application.recentEmployer, left, y, col)
+  drawField(doc, 'Job title', application.recentJobTitle, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Employment dates', application.employmentDates, left, y, col)
+  drawField(doc, 'Reason for leaving', application.reasonForLeaving, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  const responsibilitiesHeight = noteHeight(doc, application.employmentResponsibilities, 504)
+  y = ensureSpace(doc, y, responsibilitiesHeight + 60)
+  drawWideField(doc, 'Primary responsibilities', application.employmentResponsibilities, left, y, 504, responsibilitiesHeight)
+  y += responsibilitiesHeight + rowGap
+  drawField(doc, 'May contact employer', application.mayContactEmployer, left, y, col)
+  drawField(doc, 'Previously applied / worked here', application.previousUah, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawWideField(doc, 'Previous UAH details', application.previousUahDetails, left, y, 504, 48)
+  y += 48 + 24
+
+  y = ensureSpace(doc, y, 180)
+  drawSectionTitle(doc, 'Reference & Source', y)
+  y += 26
+  drawField(doc, 'Professional reference', application.referenceName, left, y, col)
+  drawField(doc, 'Relationship', application.referenceRelationship, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Reference phone', application.referencePhone, left, y, col)
+  drawField(doc, 'Reference email', application.referenceEmail, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'How applicant heard about us', application.referralSource, left, y, col)
 
   y += fieldHeight + 24
   y = ensureSpace(doc, y, 150)
