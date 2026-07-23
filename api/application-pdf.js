@@ -240,6 +240,7 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Privacy policy accepted', application.privacyPolicyAccepted, left + col + gap, y, col)
   y += fieldHeight + rowGap
   drawField(doc, 'Resume', application.resumeName || 'No resume uploaded', left, y, col)
+  drawField(doc, "Driver's license / state ID", application.identityDocumentName, left + col + gap, y, col)
 
   doc
     .font('Helvetica')

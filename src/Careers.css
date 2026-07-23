@@ -626,6 +626,22 @@
   padding: .85rem;
 }
 
+.resume-upload small,
+.upload-limit-note {
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.resume-upload small {
+  display: block;
+  margin-top: .35rem;
+}
+
+.upload-limit-note {
+  margin: -.2rem 0 .35rem;
+}
+
 .license-expiration-field {
   display: grid;
   grid-template-columns: minmax(0, .82fr) minmax(0, 1fr);

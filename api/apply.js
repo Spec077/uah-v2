@@ -4,15 +4,27 @@ import { createApplicationPdf } from './application-pdf.js'
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
 const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
+// const RECRUITER_EMAIL = 'boluwatifeobasa830@gmail.com'
 const MAX_RESUME_SIZE = 3 * 1024 * 1024
+const MAX_ID_SIZE = 3 * 1024 * 1024
+const MAX_COMBINED_UPLOAD_SIZE = 3 * 1024 * 1024
 const ALLOWED_RESUME_TYPES = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const ALLOWED_ID_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+])
 
 const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
 const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
+
+class UploadValidationError extends Error {}
 
 function json(res, status, payload) {
   if (typeof res.status === 'function') {
@@ -94,15 +106,40 @@ function validateResume(resume) {
   const size = Number(resume.size)
 
   if (!name || !content || !Number.isFinite(size)) {
-    throw new Error('Resume upload is invalid.')
+    throw new UploadValidationError('Resume upload is invalid.')
   }
 
   if (size > MAX_RESUME_SIZE) {
-    throw new Error('Resume must be 3 MB or smaller.')
+    throw new UploadValidationError('Resume must be 3 MB or smaller.')
   }
 
   if (!ALLOWED_RESUME_TYPES.has(type)) {
-    throw new Error('Resume must be a PDF, DOC, or DOCX file.')
+    throw new UploadValidationError('Resume must be a PDF, DOC, or DOCX file.')
+  }
+
+  return { name, type, content, size }
+}
+
+function validateIdentityDocument(document) {
+  if (!document) {
+    throw new UploadValidationError("Please upload a driver's license or state-issued ID.")
+  }
+
+  const name = normalizeText(document.name)
+  const type = normalizeText(document.type)
+  const content = normalizeText(document.content)
+  const size = Number(document.size)
+
+  if (!name || !content || !Number.isFinite(size) || size <= 0) {
+    throw new UploadValidationError("Driver's license or state-issued ID upload is invalid.")
+  }
+
+  if (size > MAX_ID_SIZE) {
+    throw new UploadValidationError("Driver's license or state-issued ID must be 3 MB or smaller.")
+  }
+
+  if (!ALLOWED_ID_TYPES.has(type)) {
+    throw new UploadValidationError("Driver's license or state-issued ID must be a PDF, JPG, PNG, HEIC, or HEIF file.")
   }
 
   return { name, type, content, size }
@@ -232,6 +269,12 @@ export default async function handler(req, res) {
     }
 
     const resume = validateResume(body.resume)
+    const identityDocument = validateIdentityDocument(body.identityDocument)
+
+    if ((resume?.size || 0) + identityDocument.size > MAX_COMBINED_UPLOAD_SIZE) {
+      json(res, 400, { error: 'Resume and ID files must be 3 MB or smaller in total.' })
+      return
+    }
 
     const submittedAt = new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
@@ -246,6 +289,7 @@ export default async function handler(req, res) {
       licenseNumber: application.licenseNumber || 'Not provided',
       licenseExpiration: application.licenseExpiration || 'Not provided',
       resumeName: resume?.name || 'No resume uploaded',
+      identityDocumentName: identityDocument.name,
       submittedAt,
       source: 'Careers Page',
     }
@@ -256,14 +300,20 @@ export default async function handler(req, res) {
       content: applicationPdf.toString('base64'),
     }
 
-    const attachments = resume
-      ? [
+    const recruiterDocuments = [
+      ...(resume
+        ? [
           {
             filename: resume.name,
             content: resume.content,
           },
-        ]
-      : []
+          ]
+        : []),
+      {
+        filename: identityDocument.name,
+        content: identityDocument.content,
+      },
+    ]
 
     await sendEmail(apiKey, {
       from: FROM_EMAIL,
@@ -287,12 +337,14 @@ export default async function handler(req, res) {
         'A new candidate submitted an application through the Careers page.',
         'See the attached application PDF for the full submission details.',
       ].join('\n'),
-      attachments: [applicationPdfAttachment, ...attachments],
+      attachments: [applicationPdfAttachment, ...recruiterDocuments],
     })
 
     json(res, 200, { ok: true })
   } catch (error) {
     console.error(error)
-    json(res, 500, { error: error.message || 'Unable to submit application.' })
+    json(res, error instanceof UploadValidationError ? 400 : 500, {
+      error: error.message || 'Unable to submit application.',
+    })
   }
 }

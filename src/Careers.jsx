@@ -26,7 +26,7 @@ const applicationSteps = [
   { eyebrow: 'Step 2 of 5', title: 'Availability' },
   { eyebrow: 'Step 3 of 5', title: 'Qualifications' },
   { eyebrow: 'Step 4 of 5', title: 'Experience' },
-  { eyebrow: 'Step 5 of 5', title: 'Resume & Agreement' },
+  { eyebrow: 'Step 5 of 5', title: 'Documents & Agreement' },
 ]
 
 const shiftOptions = ['Days', 'Evenings', 'Overnights', 'Weekdays', 'Weekends', 'Holidays', 'On-call']
@@ -119,14 +119,22 @@ const usStates = [
 ]
 
 const showPausedSections = false
-const maxResumeSize = 3 * 1024 * 1024
+const maxUploadSize = 3 * 1024 * 1024
+const maxCombinedUploadSize = 3 * 1024 * 1024
 const allowedResumeTypes = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const allowedIdTypes = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+])
 
-function fileToBase64(file) {
+function fileToBase64(file, label) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -135,7 +143,7 @@ function fileToBase64(file) {
       resolve(result.includes(',') ? result.split(',').pop() : result)
     }
 
-    reader.onerror = () => reject(new Error('Unable to read resume file.'))
+    reader.onerror = () => reject(new Error(`Unable to read ${label} file.`))
     reader.readAsDataURL(file)
   })
 }
@@ -413,14 +421,16 @@ function Careers() {
 
     const formData = new FormData(form)
     const resumeFile = formData.get('resume')
+    const identityDocumentFile = formData.get('identityDocument')
 
     setApplicationStatus({ type: 'submitting', message: 'Submitting your application...' })
 
     try {
       let resume = null
+      let identityDocument = null
 
       if (resumeFile instanceof File && resumeFile.size > 0) {
-        if (resumeFile.size > maxResumeSize) {
+        if (resumeFile.size > maxUploadSize) {
           throw new Error('Resume must be 3 MB or smaller.')
         }
 
@@ -432,8 +442,29 @@ function Careers() {
           name: resumeFile.name,
           type: resumeFile.type,
           size: resumeFile.size,
-          content: await fileToBase64(resumeFile),
+          content: await fileToBase64(resumeFile, 'resume'),
         }
+      }
+
+      if (identityDocumentFile instanceof File && identityDocumentFile.size > 0) {
+        if (identityDocumentFile.size > maxUploadSize) {
+          throw new Error("Driver's license or state-issued ID must be 3 MB or smaller.")
+        }
+
+        if (!allowedIdTypes.has(identityDocumentFile.type)) {
+          throw new Error("Driver's license or state-issued ID must be a PDF, JPG, PNG, HEIC, or HEIF file.")
+        }
+
+        identityDocument = {
+          name: identityDocumentFile.name,
+          type: identityDocumentFile.type,
+          size: identityDocumentFile.size,
+          content: await fileToBase64(identityDocumentFile, 'ID'),
+        }
+      }
+
+      if ((resume?.size || 0) + (identityDocument?.size || 0) > maxCombinedUploadSize) {
+        throw new Error('Resume and ID files must be 3 MB or smaller in total.')
       }
 
       const payload = {
@@ -478,6 +509,7 @@ function Careers() {
         privacyPolicyAccepted: formData.get('privacyPolicyAccepted') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
         resume,
+        identityDocument,
       }
 
       const response = await fetch('/api/apply', {
@@ -1007,12 +1039,25 @@ function Careers() {
                     className={`careers-form__group application-step-panel${applicationStep === 4 ? ' is-active' : ''}`}
                     data-application-step="4"
                   >
-                    <h3>Resume & Agreement</h3>
+                    <h3>Documents & Agreement</h3>
                     <div className="form-grid">
                       <label className="resume-upload">
                         <span>Upload resume (optional PDF, DOC, DOCX)</span>
                         <input name="resume" type="file" accept=".pdf,.doc,.docx" />
                       </label>
+                      <label className="resume-upload">
+                        <span>Driver's license or state-issued ID (PDF or image)</span>
+                        <input
+                          name="identityDocument"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif"
+                          required
+                        />
+                        <small>Required for credentialing. Your ID is sent only to the recruiting team.</small>
+                      </label>
+                      <p className="form-grid-wide upload-limit-note">
+                        Each file may be up to 3 MB; both files together must be 3 MB or less.
+                      </p>
                       <label>
                         <span>Additional notes</span>
                         <textarea
