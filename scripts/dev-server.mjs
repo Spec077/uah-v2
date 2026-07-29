@@ -2,7 +2,6 @@ import { createServer as createHttpServer } from 'node:http'
 import { readFileSync } from 'node:fs'
 import { createServer as createViteServer } from 'vite'
 import applyHandler from '../api/apply.js'
-import inquiryHandler from '../api/inquiry.js'
 
 function loadEnv() {
   const envText = readFileSync(new URL('../.env', import.meta.url), 'utf8')
@@ -42,11 +41,6 @@ const server = createHttpServer(async (req, res) => {
     return
   }
 
-  if (req.url?.startsWith('/api/inquiry')) {
-    await inquiryHandler(req, res)
-    return
-  }
-
   vite.middlewares(req, res)
 })
 
@@ -55,5 +49,4 @@ const port = Number(process.env.PORT || 5173)
 server.listen(port, () => {
   console.log(`Local app running at http://localhost:${port}`)
   console.log('Serverless API mounted at /api/apply')
-  console.log('Inquiry API mounted at /api/inquiry')
 })

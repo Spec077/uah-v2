@@ -22,19 +22,9 @@ const ArrowRightIcon = () => (
 )
 
 const applicationSteps = [
-  { eyebrow: 'Step 1 of 5', title: 'Basic Information' },
-  { eyebrow: 'Step 2 of 5', title: 'Availability' },
-  { eyebrow: 'Step 3 of 5', title: 'Qualifications' },
-  { eyebrow: 'Step 4 of 5', title: 'Experience' },
-  { eyebrow: 'Step 5 of 5', title: 'Documents & Agreement' },
-]
-
-const shiftOptions = ['Days', 'Evenings', 'Overnights', 'Weekdays', 'Weekends', 'Holidays', 'On-call']
-const certificationOptions = ['CPR / BLS', 'ACLS', 'PALS', 'CCRN', 'First Aid']
-const careExperienceOptions = [
-  'Home health', 'Pediatric care', 'Geriatric care', 'Ventilator / tracheostomy care',
-  'Medication administration', 'Wound care', 'Activities of daily living', 'Hospice',
-  'Behavioral health', 'Facility / hospital care',
+  { eyebrow: 'Step 1 of 3', title: 'Basic Information' },
+  { eyebrow: 'Step 2 of 3', title: 'Professional Information' },
+  { eyebrow: 'Step 3 of 3', title: 'Resume & Agreement' },
 ]
 
 const applicationSuccessAnimation =
@@ -119,23 +109,16 @@ const usStates = [
 ]
 
 const showPausedSections = false
-const maxUploadSize = 3 * 1024 * 1024
-const maxCombinedUploadSize = 3 * 1024 * 1024
+const maxResumeSize = 3 * 1024 * 1024
 const allowedResumeTypes = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const allowedDriverLicenseTypes = new Set(['application/pdf', 'image/jpeg', 'image/png'])
 const taxpayerIdPattern = '(?!000|666|9\\d{2})\\d{3}-(?!00)\\d{2}-(?!0000)\\d{4}|9\\d{2}-(?:7\\d|8\\d|9[0-2]|9[4-9])-\\d{4}'
-const allowedIdTypes = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/heic',
-  'image/heif',
-])
 
-function fileToBase64(file, label) {
+function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -144,12 +127,12 @@ function fileToBase64(file, label) {
       resolve(result.includes(',') ? result.split(',').pop() : result)
     }
 
-    reader.onerror = () => reject(new Error(`Unable to read ${label} file.`))
+    reader.onerror = () => reject(new Error('Unable to read resume file.'))
     reader.readAsDataURL(file)
   })
 }
 
-async function prepareUpload(file, { allowedTypes, label, maxSize = maxUploadSize }) {
+async function prepareUpload(file, { allowedTypes, label, maxSize = maxResumeSize }) {
   if (!(file instanceof File) || file.size <= 0) {
     return null
   }
@@ -166,7 +149,7 @@ async function prepareUpload(file, { allowedTypes, label, maxSize = maxUploadSiz
     name: file.name,
     type: file.type,
     size: file.size,
-    content: await fileToBase64(file, label),
+    content: await fileToBase64(file),
   }
 }
 
@@ -441,24 +424,22 @@ function Careers() {
     }
 
     const formData = new FormData(form)
+    const driverLicenseFile = formData.get('driverLicense')
     const resumeFile = formData.get('resume')
-    const identityDocumentFile = formData.get('identityDocument')
 
     setApplicationStatus({ type: 'submitting', message: 'Submitting your application...' })
 
     try {
-      const resume = await prepareUpload(resumeFile, {
+      let resume = null
+      const driverLicense = await prepareUpload(driverLicenseFile, {
+        allowedTypes: allowedDriverLicenseTypes,
+        label: "Driver's license",
+      })
+
+      resume = await prepareUpload(resumeFile, {
         allowedTypes: allowedResumeTypes,
         label: 'Resume',
       })
-      const identityDocument = await prepareUpload(identityDocumentFile, {
-        allowedTypes: allowedIdTypes,
-        label: "Driver's license or state-issued ID",
-      })
-
-      if ((resume?.size || 0) + (identityDocument?.size || 0) > maxCombinedUploadSize) {
-        throw new Error('Resume and ID files must be 3 MB or smaller in total.')
-      }
 
       const payload = {
         name: String(formData.get('name') || '').trim(),
@@ -470,41 +451,17 @@ function Careers() {
         taxpayerId: String(formData.get('taxpayerId') || '').trim(),
         role: String(formData.get('role') || '').trim(),
         employmentType: String(formData.get('employmentType') || '').trim(),
-        startDate: String(formData.get('startDate') || '').trim(),
-        shifts: formData.getAll('shifts').map(String),
-        weeklyHours: String(formData.get('weeklyHours') || '').trim(),
-        serviceAreas: String(formData.get('serviceAreas') || '').trim(),
-        reliableTransportation: String(formData.get('reliableTransportation') || '').trim(),
+        availability: String(formData.get('availability') || '').trim(),
         experience: String(formData.get('experience') || '').trim(),
-        education: String(formData.get('education') || '').trim(),
         licenseState: String(formData.get('licenseState') || '').trim(),
         licenseNumber: String(formData.get('licenseNumber') || '').trim(),
         licenseExpiration: String(formData.get('licenseExpiration') || '').trim(),
-        licenseStanding: String(formData.get('licenseStanding') || '').trim(),
-        certifications: formData.getAll('certifications').map(String),
-        otherCertification: String(formData.get('otherCertification') || '').trim(),
-        languages: String(formData.get('languages') || '').trim(),
-        essentialDuties: String(formData.get('essentialDuties') || '').trim(),
         workAuthorized: String(formData.get('workAuthorized') || '').trim(),
-        careExperience: formData.getAll('careExperience').map(String),
-        recentEmployer: String(formData.get('recentEmployer') || '').trim(),
-        recentJobTitle: String(formData.get('recentJobTitle') || '').trim(),
-        employmentDates: String(formData.get('employmentDates') || '').trim(),
-        employmentResponsibilities: String(formData.get('employmentResponsibilities') || '').trim(),
-        reasonForLeaving: String(formData.get('reasonForLeaving') || '').trim(),
-        mayContactEmployer: String(formData.get('mayContactEmployer') || '').trim(),
-        previousUah: String(formData.get('previousUah') || '').trim(),
-        previousUahDetails: String(formData.get('previousUahDetails') || '').trim(),
-        referenceName: String(formData.get('referenceName') || '').trim(),
-        referenceRelationship: String(formData.get('referenceRelationship') || '').trim(),
-        referencePhone: String(formData.get('referencePhone') || '').trim(),
-        referenceEmail: String(formData.get('referenceEmail') || '').trim(),
-        referralSource: String(formData.get('referralSource') || '').trim(),
         accuracyCertified: formData.get('accuracyCertified') === 'on' ? 'Yes' : '',
         privacyPolicyAccepted: formData.get('privacyPolicyAccepted') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
+        driverLicense,
         resume,
-        identityDocument,
       }
 
       const response = await fetch('/api/apply', {
@@ -780,19 +737,6 @@ function Careers() {
                           ))}
                         </select>
                       </label>
-                      <label>
-                        <span>How did you hear about us?</span>
-                        <select name="referralSource" defaultValue="">
-                          <option value="">Select an option</option>
-                          <option>Employee referral</option>
-                          <option>Indeed</option>
-                          <option>Social media</option>
-                          <option>School or training program</option>
-                          <option>Recruiter</option>
-                          <option>Web search</option>
-                          <option>Other</option>
-                        </select>
-                      </label>
                     </div>
                   </div>
 
@@ -800,105 +744,7 @@ function Careers() {
                     className={`careers-form__group application-step-panel${applicationStep === 1 ? ' is-active' : ''}`}
                     data-application-step="1"
                   >
-                    <h3>Availability & Travel</h3>
-                    <div className="form-grid">
-                      <label>
-                        <span>Employment type</span>
-                        <select name="employmentType" defaultValue="Full-time" required>
-                          <option>Full-time</option>
-                          <option>Part-time</option>
-                          <option>PRN / Per Diem</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>Available start date</span>
-                        <input name="startDate" type="date" required />
-                      </label>
-                      <fieldset className="choice-fieldset form-grid-wide">
-                        <legend>Available shifts</legend>
-                        <div className="choice-grid">
-                          {shiftOptions.map((shift) => (
-                            <label className="choice-option" key={shift}>
-                              <input name="shifts" type="checkbox" value={shift} />
-                              <span>{shift}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <label>
-                        <span>Hours available per week</span>
-                        <select name="weeklyHours" defaultValue="" required>
-                          <option value="" disabled>Select weekly hours</option>
-                          <option>Less than 10</option>
-                          <option>10-20</option>
-                          <option>21-30</option>
-                          <option>31-40</option>
-                          <option>40+</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>Preferred counties or service areas</span>
-                        <input name="serviceAreas" type="text" placeholder="Counties, cities, or travel radius" required />
-                      </label>
-                      <fieldset className="inline-fieldset inline-fieldset--compact">
-                        <legend>Reliable transportation to patient locations?</legend>
-                        <label className="radio-option"><input name="reliableTransportation" type="radio" value="Yes" required /><span>Yes</span></label>
-                        <label className="radio-option"><input name="reliableTransportation" type="radio" value="No" /><span>No</span></label>
-                      </fieldset>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`careers-form__group application-step-panel${applicationStep === 3 ? ' is-active' : ''}`}
-                    data-application-step="3"
-                  >
-                    <h3>Experience & References</h3>
-                    <div className="form-grid">
-                      <fieldset className="choice-fieldset form-grid-wide">
-                        <legend>Types of care you have experience providing</legend>
-                        <div className="choice-grid">
-                          {careExperienceOptions.map((area) => (
-                            <label className="choice-option" key={area}>
-                              <input name="careExperience" type="checkbox" value={area} />
-                              <span>{area}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <label><span>Most recent employer</span><input name="recentEmployer" type="text" placeholder="Organization name" /></label>
-                      <label><span>Job title</span><input name="recentJobTitle" type="text" placeholder="Your title" /></label>
-                      <label><span>Employment dates</span><input name="employmentDates" type="text" placeholder="Example: Jan 2023 – Jun 2026" /></label>
-                      <label><span>Reason for leaving</span><input name="reasonForLeaving" type="text" placeholder="Optional" /></label>
-                      <label className="form-grid-wide">
-                        <span>Primary responsibilities</span>
-                        <textarea name="employmentResponsibilities" rows="3" maxLength="1000" placeholder="Briefly describe your main responsibilities." />
-                      </label>
-                      <fieldset className="inline-fieldset inline-fieldset--compact">
-                        <legend>May we contact this employer?</legend>
-                        <label className="radio-option"><input name="mayContactEmployer" type="radio" value="Yes" /><span>Yes</span></label>
-                        <label className="radio-option"><input name="mayContactEmployer" type="radio" value="No" /><span>No</span></label>
-                      </fieldset>
-                      <fieldset className="inline-fieldset inline-fieldset--compact">
-                        <legend>Previously applied to or worked for UAH?</legend>
-                        <label className="radio-option"><input name="previousUah" type="radio" value="Yes" required /><span>Yes</span></label>
-                        <label className="radio-option"><input name="previousUah" type="radio" value="No" /><span>No</span></label>
-                      </fieldset>
-                      <label className="form-grid-wide">
-                        <span>Previous UAH application or employment details</span>
-                        <input name="previousUahDetails" type="text" placeholder="If applicable, provide approximate date and role" />
-                      </label>
-                      <label><span>Professional reference name</span><input name="referenceName" type="text" placeholder="Optional" /></label>
-                      <label><span>Relationship</span><input name="referenceRelationship" type="text" placeholder="Supervisor, manager, coworker" /></label>
-                      <label><span>Reference phone</span><input name="referencePhone" type="tel" inputMode="tel" placeholder="(224) 555-0100" /></label>
-                      <label><span>Reference email</span><input name="referenceEmail" type="email" placeholder="reference@example.com" /></label>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`careers-form__group application-step-panel${applicationStep === 2 ? ' is-active' : ''}`}
-                    data-application-step="2"
-                  >
-                    <h3>Qualifications</h3>
+                    <h3>Professional Information</h3>
                     <div className="form-grid">
                       <label>
                         <span>Role applying for</span>
@@ -908,6 +754,28 @@ function Careers() {
                           <option>CNA</option>
                           <option>Caregiver</option>
                           <option>Other</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Employment type</span>
+                        <select name="employmentType" defaultValue="Full-time" required>
+                          <option>Full-time</option>
+                          <option>Part-time</option>
+                          <option>PRN / Per Diem</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Availability</span>
+                        <select name="availability" defaultValue="" required>
+                          <option value="" disabled>
+                            Select availability
+                          </option>
+                          <option>Immediate start</option>
+                          <option>Weekdays</option>
+                          <option>Weekends</option>
+                          <option>Evenings</option>
+                          <option>Nights</option>
+                          <option>Flexible</option>
                         </select>
                       </label>
                       <label>
@@ -921,21 +789,6 @@ function Careers() {
                         </select>
                       </label>
                       <label>
-                        <span>Highest relevant education or credential</span>
-                        <select name="education" defaultValue="" required>
-                          <option value="" disabled>Select education</option>
-                          <option>High school / GED</option>
-                          <option>Caregiver training</option>
-                          <option>CNA</option>
-                          <option>LPN / LVN</option>
-                          <option>ADN</option>
-                          <option>BSN</option>
-                          <option>MSN or higher</option>
-                          <option>Allied health certification</option>
-                          <option>Other</option>
-                        </select>
-                      </label>
-                      <label>
                         <span>Current license state</span>
                         <select name="licenseState" defaultValue="IL" required>
                           {usStates.map(([value, label]) => (
@@ -944,31 +797,6 @@ function Careers() {
                             </option>
                           ))}
                         </select>
-                      </label>
-                      <fieldset className="inline-fieldset inline-fieldset--compact">
-                        <legend>License or certification active and in good standing?</legend>
-                        <label className="radio-option"><input name="licenseStanding" type="radio" value="Yes" required /><span>Yes</span></label>
-                        <label className="radio-option"><input name="licenseStanding" type="radio" value="No" /><span>No</span></label>
-                        <label className="radio-option"><input name="licenseStanding" type="radio" value="Not applicable" /><span>N/A</span></label>
-                      </fieldset>
-                      <fieldset className="choice-fieldset form-grid-wide">
-                        <legend>Current certifications</legend>
-                        <div className="choice-grid">
-                          {certificationOptions.map((certification) => (
-                            <label className="choice-option" key={certification}>
-                              <input name="certifications" type="checkbox" value={certification} />
-                              <span>{certification}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <label>
-                        <span>Other certification and expiration</span>
-                        <input name="otherCertification" type="text" placeholder="Optional" />
-                      </label>
-                      <label>
-                        <span>Languages spoken and proficiency</span>
-                        <input name="languages" type="text" placeholder="Example: Spanish — fluent" />
                       </label>
                       <label>
                         <span>License number</span>
@@ -1025,19 +853,14 @@ function Careers() {
                           <span>No</span>
                         </label>
                       </fieldset>
-                      <fieldset className="inline-fieldset inline-fieldset--compact form-grid-wide">
-                        <legend>Can you perform the essential duties with or without reasonable accommodation?</legend>
-                        <label className="radio-option"><input name="essentialDuties" type="radio" value="Yes" required /><span>Yes</span></label>
-                        <label className="radio-option"><input name="essentialDuties" type="radio" value="No" /><span>No</span></label>
-                      </fieldset>
                     </div>
                   </div>
 
                   <div
-                    className={`careers-form__group application-step-panel${applicationStep === 4 ? ' is-active' : ''}`}
-                    data-application-step="4"
+                    className={`careers-form__group application-step-panel${applicationStep === 2 ? ' is-active' : ''}`}
+                    data-application-step="2"
                   >
-                    <h3>Documents & Agreement</h3>
+                    <h3>Resume & Agreement</h3>
                     <div className="form-grid">
                       <label>
                         <span>SSN or ITIN</span>
@@ -1065,22 +888,13 @@ function Careers() {
                         />
                       </label>
                       <label className="resume-upload">
+                        <span>Upload driver's license (PDF, JPG, PNG)</span>
+                        <input name="driverLicense" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                      </label>
+                      <label className="resume-upload">
                         <span>Upload resume (PDF, DOC, DOCX)</span>
                         <input name="resume" type="file" accept=".pdf,.doc,.docx" required />
                       </label>
-                      <label className="resume-upload">
-                        <span>Driver's license or state-issued ID (PDF or image)</span>
-                        <input
-                          name="identityDocument"
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif"
-                          required
-                        />
-                        <small>Required for credentialing. Your ID is sent only to the recruiting team.</small>
-                      </label>
-                      <p className="form-grid-wide upload-limit-note">
-                        Each file may be up to 3 MB; both files together must be 3 MB or less.
-                      </p>
                       <label>
                         <span>Additional notes</span>
                         <textarea
