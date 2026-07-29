@@ -10,6 +10,8 @@ const sampleApplication = {
   email: 'jane.smith@example.com',
   city: 'Carpentersville',
   state: 'IL',
+  taxpayerIdType: 'Social Security Number',
+  taxpayerId: '123-45-6789',
   role: 'RN',
   employmentType: 'Full-time',
   availability: 'Weekdays',
@@ -22,6 +24,7 @@ const sampleApplication = {
   privacyPolicyAccepted: 'Yes',
   message:
     'BLS certified. Available for weekday day shifts and occasional weekends. Interested in home health and skilled nursing assignments.',
+  driverLicenseName: 'jane-smith-driver-license.pdf',
   resumeName: 'No resume uploaded',
   submittedAt: 'Jul 15, 2026, 10:30 AM',
 }

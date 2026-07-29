@@ -10,6 +10,9 @@ const ALLOWED_RESUME_TYPES = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const ALLOWED_DRIVER_LICENSE_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png'])
+const TAXPAYER_ID_PATTERN =
+  /^(?:(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}|9\d{2}-(?:7\d|8\d|9[0-2]|9[4-9])-\d{4})$/
 
 const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
 const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
@@ -60,6 +63,10 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+function isTaxpayerId(value) {
+  return TAXPAYER_ID_PATTERN.test(value)
+}
+
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') {
     return req.body
@@ -79,26 +86,26 @@ async function readBody(req) {
   return rawBody ? JSON.parse(rawBody) : {}
 }
 
-function validateResume(resume) {
-  if (!resume) {
+function validateUpload(upload, { allowedTypes, label }) {
+  if (!upload) {
     return null
   }
 
-  const name = normalizeText(resume.name)
-  const type = normalizeText(resume.type)
-  const content = normalizeText(resume.content)
-  const size = Number(resume.size)
+  const name = normalizeText(upload.name)
+  const type = normalizeText(upload.type)
+  const content = normalizeText(upload.content)
+  const size = Number(upload.size)
 
   if (!name || !content || !Number.isFinite(size)) {
-    throw new Error('Resume upload is invalid.')
+    throw new Error(`${label} upload is invalid.`)
   }
 
   if (size > MAX_RESUME_SIZE) {
-    throw new Error('Resume must be 3 MB or smaller.')
+    throw new Error(`${label} must be 3 MB or smaller.`)
   }
 
-  if (!ALLOWED_RESUME_TYPES.has(type)) {
-    throw new Error('Resume must be a PDF, DOC, or DOCX file.')
+  if (!allowedTypes.has(type)) {
+    throw new Error(`${label} must be an accepted file type.`)
   }
 
   return { name, type, content, size }
@@ -159,6 +166,8 @@ export default async function handler(req, res) {
       email: normalizeText(body.email),
       city: normalizeText(body.city),
       state: normalizeText(body.state),
+      taxpayerIdType: normalizeText(body.taxpayerIdType),
+      taxpayerId: normalizeText(body.taxpayerId),
       role: normalizeText(body.role),
       employmentType: normalizeText(body.employmentType),
       availability: normalizeText(body.availability),
@@ -178,14 +187,19 @@ export default async function handler(req, res) {
       !application.email ||
       !application.city ||
       !application.state ||
+      !application.taxpayerIdType ||
+      !application.taxpayerId ||
       !application.role ||
       !application.employmentType ||
       !application.availability ||
       !application.experience ||
       !application.licenseState ||
+      !application.licenseNumber ||
+      !application.licenseExpiration ||
       !application.workAuthorized ||
       !application.accuracyCertified ||
-      !application.privacyPolicyAccepted
+      !application.privacyPolicyAccepted ||
+      !application.message
     ) {
       json(res, 400, { error: 'Please complete all required fields.' })
       return
@@ -196,7 +210,29 @@ export default async function handler(req, res) {
       return
     }
 
-    const resume = validateResume(body.resume)
+    if (!isTaxpayerId(application.taxpayerId)) {
+      json(res, 400, { error: 'Please enter a valid SSN or ITIN in the format 123-45-6789.' })
+      return
+    }
+
+    const driverLicense = validateUpload(body.driverLicense, {
+      allowedTypes: ALLOWED_DRIVER_LICENSE_TYPES,
+      label: "Driver's license",
+    })
+    const resume = validateUpload(body.resume, {
+      allowedTypes: ALLOWED_RESUME_TYPES,
+      label: 'Resume',
+    })
+
+    if (!driverLicense) {
+      json(res, 400, { error: "Please upload a driver's license." })
+      return
+    }
+
+    if (!resume) {
+      json(res, 400, { error: 'Please upload a resume.' })
+      return
+    }
 
     const submittedAt = new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
@@ -207,9 +243,10 @@ export default async function handler(req, res) {
     const values = {
       ...application,
       firstName: firstName(application.name),
-      message: application.message || 'No additional notes provided.',
-      licenseNumber: application.licenseNumber || 'Not provided',
-      licenseExpiration: application.licenseExpiration || 'Not provided',
+      message: application.message,
+      licenseNumber: application.licenseNumber,
+      licenseExpiration: application.licenseExpiration,
+      driverLicenseName: driverLicense?.name || "No driver's license uploaded",
       resumeName: resume?.name || 'No resume uploaded',
       submittedAt,
       source: 'Careers Page',
@@ -223,6 +260,10 @@ export default async function handler(req, res) {
 
     const attachments = resume
       ? [
+          {
+            filename: driverLicense.name,
+            content: driverLicense.content,
+          },
           {
             filename: resume.name,
             content: resume.content,

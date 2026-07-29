@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs'
 import PDFDocument from 'pdfkit'
 
-const brand = '#bd23cd'
 const ink = '#18121f'
 const muted = '#6f6878'
 const border = '#e8e2ec'
@@ -159,6 +158,9 @@ export async function createApplicationPdf(application, options = {}) {
   y += fieldHeight + rowGap
   drawField(doc, 'Email address', application.email, left, y, col)
   drawField(doc, 'Location', `${display(application.city)}, ${display(application.state)}`, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'SSN or ITIN', application.taxpayerIdType, left, y, col)
+  drawField(doc, 'SSN or ITIN number', application.taxpayerId, left + col + gap, y, col)
 
   y += fieldHeight + 24
   drawSectionTitle(doc, 'Professional Details', y)
@@ -187,7 +189,8 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Accuracy certified', application.accuracyCertified, left, y, col)
   drawField(doc, 'Privacy policy accepted', application.privacyPolicyAccepted, left + col + gap, y, col)
   y += fieldHeight + rowGap
-  drawField(doc, 'Resume', application.resumeName || 'No resume uploaded', left, y, col)
+  drawField(doc, "Driver's license", application.driverLicenseName || "No driver's license uploaded", left, y, col)
+  drawField(doc, 'Resume', application.resumeName || 'No resume uploaded', left + col + gap, y, col)
 
   doc
     .font('Helvetica')

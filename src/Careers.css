@@ -377,9 +377,11 @@
   grid-column: 1 / -1;
 }
 
-.application-step-panel[data-application-step="2"] .form-grid label:nth-child(2),
 .application-step-panel[data-application-step="2"] .form-grid label:nth-child(3),
-.application-step-panel[data-application-step="2"] .form-grid label:nth-child(4) {
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(4),
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(5),
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(6),
+.application-step-panel[data-application-step="2"] .form-grid label:nth-child(7) {
   grid-column: 1 / -1;
 }
 
@@ -1043,9 +1045,11 @@
   }
 
   .application-step-panel[data-application-step="0"] .form-grid label:nth-child(3),
-  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(2),
   .application-step-panel[data-application-step="2"] .form-grid label:nth-child(3),
-  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(4) {
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(4),
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(5),
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(6),
+  .application-step-panel[data-application-step="2"] .form-grid label:nth-child(7) {
     grid-column: auto;
   }
 

@@ -115,6 +115,8 @@ const allowedResumeTypes = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const allowedDriverLicenseTypes = new Set(['application/pdf', 'image/jpeg', 'image/png'])
+const taxpayerIdPattern = '(?!000|666|9\\d{2})\\d{3}-(?!00)\\d{2}-(?!0000)\\d{4}|9\\d{2}-(?:7\\d|8\\d|9[0-2]|9[4-9])-\\d{4}'
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -128,6 +130,34 @@ function fileToBase64(file) {
     reader.onerror = () => reject(new Error('Unable to read resume file.'))
     reader.readAsDataURL(file)
   })
+}
+
+async function prepareUpload(file, { allowedTypes, label, maxSize = maxResumeSize }) {
+  if (!(file instanceof File) || file.size <= 0) {
+    return null
+  }
+
+  if (file.size > maxSize) {
+    throw new Error(`${label} must be 3 MB or smaller.`)
+  }
+
+  if (!allowedTypes.has(file.type)) {
+    throw new Error(`${label} must be an accepted file type.`)
+  }
+
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    content: await fileToBase64(file),
+  }
+}
+
+function formatTaxpayerId(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 9)
+  const parts = [digits.slice(0, 3), digits.slice(3, 5), digits.slice(5, 9)].filter(Boolean)
+
+  return parts.join('-')
 }
 
 const benefits = [
@@ -266,9 +296,8 @@ function Careers() {
   const [applicationStatus, setApplicationStatus] = useState({ type: 'idle', message: '' })
   const [applicationStep, setApplicationStep] = useState(0)
   const [phoneValue, setPhoneValue] = useState('')
-  const [isHeroOutOfSight, setIsHeroOutOfSight] = useState(false)
+  const [taxpayerIdValue, setTaxpayerIdValue] = useState('')
   const [licenseExpiration, setLicenseExpiration] = useState({ month: '', year: '' })
-  const heroRef = useRef(null)
   const applicationFormRef = useRef(null)
   const applicationSuccessRef = useRef(null)
   const isMenuOpen = menuState === 'open'
@@ -292,34 +321,6 @@ function Careers() {
 
     return () => window.clearTimeout(timer)
   }, [menuState])
-
-  useEffect(() => {
-    let frame = 0
-
-    const updateHeroVisibility = () => {
-      frame = 0
-      const heroBounds = heroRef.current?.getBoundingClientRect()
-      setIsHeroOutOfSight(Boolean(heroBounds && heroBounds.bottom <= 0))
-    }
-
-    const handleViewportChange = () => {
-      if (!frame) {
-        frame = window.requestAnimationFrame(updateHeroVisibility)
-      }
-    }
-
-    updateHeroVisibility()
-    window.addEventListener('scroll', handleViewportChange, { passive: true })
-    window.addEventListener('resize', handleViewportChange)
-
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame)
-      }
-      window.removeEventListener('scroll', handleViewportChange)
-      window.removeEventListener('resize', handleViewportChange)
-    }
-  }, [])
 
   useEffect(() => {
     if (applicationStatus.type !== 'success') {
@@ -365,6 +366,24 @@ function Careers() {
 
     return true
   }
+  const validateApplicationSteps = () => {
+    for (let stepIndex = 0; stepIndex < applicationSteps.length; stepIndex += 1) {
+      const stepNode = applicationFormRef.current?.querySelector(`[data-application-step="${stepIndex}"]`)
+      const fields = Array.from(stepNode?.querySelectorAll('input, select, textarea') || [])
+      const invalidField = fields.find((field) => !field.checkValidity())
+
+      if (invalidField) {
+        setApplicationStep(stepIndex)
+        window.requestAnimationFrame(() => {
+          invalidField.reportValidity()
+          smoothScrollToTarget(applicationFormRef.current)
+        })
+        return false
+      }
+    }
+
+    return true
+  }
   const scrollApplicationToTop = () => {
     window.requestAnimationFrame(() => {
       smoothScrollToTarget(applicationFormRef.current)
@@ -385,6 +404,9 @@ function Careers() {
   const handlePhoneChange = (event) => {
     setPhoneValue(formatUSPhoneNumber(event.target.value))
   }
+  const handleTaxpayerIdChange = (event) => {
+    setTaxpayerIdValue(formatTaxpayerId(event.target.value))
+  }
   const handleLicenseExpirationChange = (field) => (event) => {
     setLicenseExpiration((currentExpiration) => ({
       ...currentExpiration,
@@ -397,34 +419,27 @@ function Careers() {
 
     const form = event.currentTarget
 
-    if (!validateApplicationStep(applicationSteps.length - 1)) {
+    if (!validateApplicationSteps()) {
       return
     }
 
     const formData = new FormData(form)
+    const driverLicenseFile = formData.get('driverLicense')
     const resumeFile = formData.get('resume')
 
     setApplicationStatus({ type: 'submitting', message: 'Submitting your application...' })
 
     try {
       let resume = null
+      const driverLicense = await prepareUpload(driverLicenseFile, {
+        allowedTypes: allowedDriverLicenseTypes,
+        label: "Driver's license",
+      })
 
-      if (resumeFile instanceof File && resumeFile.size > 0) {
-        if (resumeFile.size > maxResumeSize) {
-          throw new Error('Resume must be 3 MB or smaller.')
-        }
-
-        if (!allowedResumeTypes.has(resumeFile.type)) {
-          throw new Error('Resume must be a PDF, DOC, or DOCX file.')
-        }
-
-        resume = {
-          name: resumeFile.name,
-          type: resumeFile.type,
-          size: resumeFile.size,
-          content: await fileToBase64(resumeFile),
-        }
-      }
+      resume = await prepareUpload(resumeFile, {
+        allowedTypes: allowedResumeTypes,
+        label: 'Resume',
+      })
 
       const payload = {
         name: String(formData.get('name') || '').trim(),
@@ -432,6 +447,8 @@ function Careers() {
         email: String(formData.get('email') || '').trim(),
         city: String(formData.get('city') || '').trim(),
         state: String(formData.get('state') || '').trim(),
+        taxpayerIdType: String(formData.get('taxpayerIdType') || '').trim(),
+        taxpayerId: String(formData.get('taxpayerId') || '').trim(),
         role: String(formData.get('role') || '').trim(),
         employmentType: String(formData.get('employmentType') || '').trim(),
         availability: String(formData.get('availability') || '').trim(),
@@ -443,6 +460,7 @@ function Careers() {
         accuracyCertified: formData.get('accuracyCertified') === 'on' ? 'Yes' : '',
         privacyPolicyAccepted: formData.get('privacyPolicyAccepted') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
+        driverLicense,
         resume,
       }
 
@@ -460,6 +478,7 @@ function Careers() {
 
       form.reset()
       setPhoneValue('')
+      setTaxpayerIdValue('')
       setLicenseExpiration({ month: '', year: '' })
       setApplicationStep(0)
       setApplicationStatus({
@@ -509,7 +528,7 @@ function Careers() {
       />
 
       <main>
-        <section className="careers-hero" ref={heroRef}>
+        <section className="careers-hero">
           <div className="container careers-hero__grid">
             <div className="careers-hero__content">
               <p className="eyebrow">Careers at United Ace Healthcare</p>
@@ -781,7 +800,7 @@ function Careers() {
                       </label>
                       <label>
                         <span>License number</span>
-                        <input name="licenseNumber" type="text" placeholder="Optional for some roles" />
+                        <input name="licenseNumber" type="text" placeholder="RN-123456" required />
                       </label>
                       <label>
                         <span>License expiration</span>
@@ -790,6 +809,7 @@ function Careers() {
                             aria-label="License expiration month"
                             value={licenseExpiration.month}
                             onChange={handleLicenseExpirationChange('month')}
+                            required
                           >
                             <option value="">Month</option>
                             {expirationMonths.map(([value, label]) => (
@@ -802,6 +822,7 @@ function Careers() {
                             aria-label="License expiration year"
                             value={licenseExpiration.year}
                             onChange={handleLicenseExpirationChange('year')}
+                            required
                           >
                             <option value="">Year</option>
                             {expirationYears.map((year) => (
@@ -841,9 +862,38 @@ function Careers() {
                   >
                     <h3>Resume & Agreement</h3>
                     <div className="form-grid">
+                      <label>
+                        <span>SSN or ITIN</span>
+                        <select name="taxpayerIdType" defaultValue="" required>
+                          <option value="" disabled>
+                            Select identifier
+                          </option>
+                          <option>Social Security Number</option>
+                          <option>ITIN</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>SSN or ITIN number</span>
+                        <input
+                          name="taxpayerId"
+                          type="text"
+                          autoComplete="off"
+                          inputMode="numeric"
+                          pattern={taxpayerIdPattern}
+                          placeholder="123-45-6789"
+                          title="Enter a valid SSN or ITIN in the format 123-45-6789."
+                          value={taxpayerIdValue}
+                          onChange={handleTaxpayerIdChange}
+                          required
+                        />
+                      </label>
                       <label className="resume-upload">
-                        <span>Upload resume (optional PDF, DOC, DOCX)</span>
-                        <input name="resume" type="file" accept=".pdf,.doc,.docx" />
+                        <span>Upload driver's license (PDF, JPG, PNG)</span>
+                        <input name="driverLicense" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                      </label>
+                      <label className="resume-upload">
+                        <span>Upload resume (PDF, DOC, DOCX)</span>
+                        <input name="resume" type="file" accept=".pdf,.doc,.docx" required />
                       </label>
                       <label>
                         <span>Additional notes</span>
@@ -852,6 +902,7 @@ function Careers() {
                           rows="4"
                           maxLength="1500"
                           placeholder="Certifications, referrals, preferred shifts, or anything else helpful."
+                          required
                         />
                       </label>
                       <label className="agreement-check">
