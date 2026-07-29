@@ -382,6 +382,20 @@ function Careers() {
       return true
     }
 
+    const requiredGroups = Array.from(stepNode.querySelectorAll('[data-required-group]'))
+    const invalidGroup = requiredGroups.find((group) => {
+      const checkedField = group.querySelector('input[type="checkbox"]:checked, input[type="radio"]:checked')
+      return !checkedField
+    })
+
+    if (invalidGroup) {
+      const firstField = invalidGroup.querySelector('input')
+      firstField?.setCustomValidity('Please select at least one option.')
+      firstField?.reportValidity()
+      firstField?.setCustomValidity('')
+      return false
+    }
+
     const fields = Array.from(stepNode.querySelectorAll('input, select, textarea'))
     const invalidField = fields.find((field) => !field.checkValidity())
 
@@ -395,6 +409,24 @@ function Careers() {
   const validateApplicationSteps = () => {
     for (let stepIndex = 0; stepIndex < applicationSteps.length; stepIndex += 1) {
       const stepNode = applicationFormRef.current?.querySelector(`[data-application-step="${stepIndex}"]`)
+      const requiredGroups = Array.from(stepNode?.querySelectorAll('[data-required-group]') || [])
+      const invalidGroup = requiredGroups.find((group) => {
+        const checkedField = group.querySelector('input[type="checkbox"]:checked, input[type="radio"]:checked')
+        return !checkedField
+      })
+
+      if (invalidGroup) {
+        const firstField = invalidGroup.querySelector('input')
+        setApplicationStep(stepIndex)
+        window.requestAnimationFrame(() => {
+          firstField?.setCustomValidity('Please select at least one option.')
+          firstField?.reportValidity()
+          firstField?.setCustomValidity('')
+          smoothScrollToTarget(applicationFormRef.current)
+        })
+        return false
+      }
+
       const fields = Array.from(stepNode?.querySelectorAll('input, select, textarea') || [])
       const invalidField = fields.find((field) => !field.checkValidity())
 
@@ -819,8 +851,8 @@ function Careers() {
                       </label>
                       <label>
                         <span>How did you hear about us?</span>
-                        <select name="referralSource" defaultValue="">
-                          <option value="">Select an option</option>
+                        <select name="referralSource" defaultValue="" required>
+                          <option value="" disabled>Select an option</option>
                           <option>Employee referral</option>
                           <option>Indeed</option>
                           <option>Social media</option>
@@ -851,7 +883,7 @@ function Careers() {
                         <span>Available start date</span>
                         <input name="startDate" type="date" required />
                       </label>
-                      <fieldset className="choice-fieldset form-grid-wide">
+                      <fieldset className="choice-fieldset form-grid-wide" data-required-group>
                         <legend>Available shifts</legend>
                         <div className="choice-grid">
                           {shiftOptions.map((shift) => (
@@ -891,7 +923,7 @@ function Careers() {
                   >
                     <h3>Experience & References</h3>
                     <div className="form-grid">
-                      <fieldset className="choice-fieldset form-grid-wide">
+                      <fieldset className="choice-fieldset form-grid-wide" data-required-group>
                         <legend>Types of care you have experience providing</legend>
                         <div className="choice-grid">
                           {careExperienceOptions.map((area) => (
@@ -902,17 +934,17 @@ function Careers() {
                           ))}
                         </div>
                       </fieldset>
-                      <label><span>Most recent employer</span><input name="recentEmployer" type="text" placeholder="Organization name" /></label>
-                      <label><span>Job title</span><input name="recentJobTitle" type="text" placeholder="Your title" /></label>
+                      <label><span>Most recent employer</span><input name="recentEmployer" type="text" placeholder="Organization name" required /></label>
+                      <label><span>Job title</span><input name="recentJobTitle" type="text" placeholder="Your title" required /></label>
                       <label><span>Employment dates</span><input name="employmentDates" type="text" placeholder="Example: Jan 2023 – Jun 2026" /></label>
-                      <label><span>Reason for leaving</span><input name="reasonForLeaving" type="text" placeholder="Optional" /></label>
+                      <label><span>Reason for leaving</span><input name="reasonForLeaving" type="text" placeholder="Enter N/A if not applicable" required /></label>
                       <label className="form-grid-wide">
                         <span>Primary responsibilities</span>
-                        <textarea name="employmentResponsibilities" rows="3" maxLength="1000" placeholder="Briefly describe your main responsibilities." />
+                        <textarea name="employmentResponsibilities" rows="3" maxLength="1000" placeholder="Briefly describe your main responsibilities." required />
                       </label>
                       <fieldset className="inline-fieldset inline-fieldset--compact">
                         <legend>May we contact this employer?</legend>
-                        <label className="radio-option"><input name="mayContactEmployer" type="radio" value="Yes" /><span>Yes</span></label>
+                        <label className="radio-option"><input name="mayContactEmployer" type="radio" value="Yes" required /><span>Yes</span></label>
                         <label className="radio-option"><input name="mayContactEmployer" type="radio" value="No" /><span>No</span></label>
                       </fieldset>
                       <fieldset className="inline-fieldset inline-fieldset--compact">
@@ -922,12 +954,12 @@ function Careers() {
                       </fieldset>
                       <label className="form-grid-wide">
                         <span>Previous UAH application or employment details</span>
-                        <input name="previousUahDetails" type="text" placeholder="If applicable, provide approximate date and role" />
+                        <input name="previousUahDetails" type="text" placeholder="Enter N/A if not applicable" required />
                       </label>
-                      <label><span>Professional reference name</span><input name="referenceName" type="text" placeholder="Optional" /></label>
-                      <label><span>Relationship</span><input name="referenceRelationship" type="text" placeholder="Supervisor, manager, coworker" /></label>
-                      <label><span>Reference phone</span><input name="referencePhone" type="tel" inputMode="tel" placeholder="(224) 555-0100" /></label>
-                      <label><span>Reference email</span><input name="referenceEmail" type="email" placeholder="reference@example.com" /></label>
+                      <label><span>Professional reference name</span><input name="referenceName" type="text" placeholder="Reference name" required /></label>
+                      <label><span>Relationship</span><input name="referenceRelationship" type="text" placeholder="Supervisor, manager, coworker" required /></label>
+                      <label><span>Reference phone</span><input name="referencePhone" type="tel" inputMode="tel" placeholder="(224) 555-0100" required /></label>
+                      <label><span>Reference email</span><input name="referenceEmail" type="email" placeholder="reference@example.com" required /></label>
                     </div>
                   </div>
 
