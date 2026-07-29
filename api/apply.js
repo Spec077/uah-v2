@@ -4,18 +4,29 @@ import { createApplicationPdf } from './application-pdf.js'
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
 const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
+// const RECRUITER_EMAIL = 'boluwatifeobasa830@gmail.com'
 const MAX_RESUME_SIZE = 3 * 1024 * 1024
+const MAX_ID_SIZE = 3 * 1024 * 1024
+const MAX_COMBINED_UPLOAD_SIZE = 3 * 1024 * 1024
 const ALLOWED_RESUME_TYPES = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
-const ALLOWED_DRIVER_LICENSE_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png'])
+const ALLOWED_ID_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+])
 const TAXPAYER_ID_PATTERN =
   /^(?:(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}|9\d{2}-(?:7\d|8\d|9[0-2]|9[4-9])-\d{4})$/
 
 const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
 const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
+
+class UploadValidationError extends Error {}
 
 function json(res, status, payload) {
   if (typeof res.status === 'function') {
@@ -55,6 +66,10 @@ function normalizeText(value) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function normalizeList(value) {
+  return Array.isArray(value) ? value.map(normalizeText).filter(Boolean).join(', ') : normalizeText(value)
+}
+
 function firstName(name) {
   return normalizeText(name).split(/\s+/)[0] || 'there'
 }
@@ -86,26 +101,51 @@ async function readBody(req) {
   return rawBody ? JSON.parse(rawBody) : {}
 }
 
-function validateUpload(upload, { allowedTypes, label }) {
-  if (!upload) {
+function validateResume(resume) {
+  if (!resume) {
     return null
   }
 
-  const name = normalizeText(upload.name)
-  const type = normalizeText(upload.type)
-  const content = normalizeText(upload.content)
-  const size = Number(upload.size)
+  const name = normalizeText(resume.name)
+  const type = normalizeText(resume.type)
+  const content = normalizeText(resume.content)
+  const size = Number(resume.size)
 
   if (!name || !content || !Number.isFinite(size)) {
-    throw new Error(`${label} upload is invalid.`)
+    throw new UploadValidationError('Resume upload is invalid.')
   }
 
   if (size > MAX_RESUME_SIZE) {
-    throw new Error(`${label} must be 3 MB or smaller.`)
+    throw new UploadValidationError('Resume must be 3 MB or smaller.')
   }
 
-  if (!allowedTypes.has(type)) {
-    throw new Error(`${label} must be an accepted file type.`)
+  if (!ALLOWED_RESUME_TYPES.has(type)) {
+    throw new UploadValidationError('Resume must be a PDF, DOC, or DOCX file.')
+  }
+
+  return { name, type, content, size }
+}
+
+function validateIdentityDocument(document) {
+  if (!document) {
+    throw new UploadValidationError("Please upload a driver's license or state-issued ID.")
+  }
+
+  const name = normalizeText(document.name)
+  const type = normalizeText(document.type)
+  const content = normalizeText(document.content)
+  const size = Number(document.size)
+
+  if (!name || !content || !Number.isFinite(size) || size <= 0) {
+    throw new UploadValidationError("Driver's license or state-issued ID upload is invalid.")
+  }
+
+  if (size > MAX_ID_SIZE) {
+    throw new UploadValidationError("Driver's license or state-issued ID must be 3 MB or smaller.")
+  }
+
+  if (!ALLOWED_ID_TYPES.has(type)) {
+    throw new UploadValidationError("Driver's license or state-issued ID must be a PDF, JPG, PNG, HEIC, or HEIF file.")
   }
 
   return { name, type, content, size }
@@ -170,12 +210,36 @@ export default async function handler(req, res) {
       taxpayerId: normalizeText(body.taxpayerId),
       role: normalizeText(body.role),
       employmentType: normalizeText(body.employmentType),
-      availability: normalizeText(body.availability),
+      startDate: normalizeText(body.startDate),
+      shifts: normalizeList(body.shifts),
+      weeklyHours: normalizeText(body.weeklyHours),
+      serviceAreas: normalizeText(body.serviceAreas),
+      reliableTransportation: normalizeText(body.reliableTransportation),
       experience: normalizeText(body.experience),
+      education: normalizeText(body.education),
       licenseState: normalizeText(body.licenseState),
       licenseNumber: normalizeText(body.licenseNumber),
       licenseExpiration: normalizeText(body.licenseExpiration),
+      licenseStanding: normalizeText(body.licenseStanding),
+      certifications: normalizeList(body.certifications),
+      otherCertification: normalizeText(body.otherCertification),
+      languages: normalizeText(body.languages),
+      essentialDuties: normalizeText(body.essentialDuties),
       workAuthorized: normalizeText(body.workAuthorized),
+      careExperience: normalizeList(body.careExperience),
+      recentEmployer: normalizeText(body.recentEmployer),
+      recentJobTitle: normalizeText(body.recentJobTitle),
+      employmentDates: normalizeText(body.employmentDates),
+      employmentResponsibilities: normalizeText(body.employmentResponsibilities),
+      reasonForLeaving: normalizeText(body.reasonForLeaving),
+      mayContactEmployer: normalizeText(body.mayContactEmployer),
+      previousUah: normalizeText(body.previousUah),
+      previousUahDetails: normalizeText(body.previousUahDetails),
+      referenceName: normalizeText(body.referenceName),
+      referenceRelationship: normalizeText(body.referenceRelationship),
+      referencePhone: normalizeText(body.referencePhone),
+      referenceEmail: normalizeText(body.referenceEmail),
+      referralSource: normalizeText(body.referralSource),
       accuracyCertified: normalizeText(body.accuracyCertified),
       privacyPolicyAccepted: normalizeText(body.privacyPolicyAccepted),
       message: normalizeText(body.message),
@@ -191,12 +255,17 @@ export default async function handler(req, res) {
       !application.taxpayerId ||
       !application.role ||
       !application.employmentType ||
-      !application.availability ||
+      !application.startDate ||
+      !application.weeklyHours ||
+      !application.serviceAreas ||
+      !application.reliableTransportation ||
       !application.experience ||
+      !application.education ||
       !application.licenseState ||
-      !application.licenseNumber ||
-      !application.licenseExpiration ||
+      !application.licenseStanding ||
+      !application.essentialDuties ||
       !application.workAuthorized ||
+      !application.previousUah ||
       !application.accuracyCertified ||
       !application.privacyPolicyAccepted ||
       !application.message
@@ -215,22 +284,16 @@ export default async function handler(req, res) {
       return
     }
 
-    const driverLicense = validateUpload(body.driverLicense, {
-      allowedTypes: ALLOWED_DRIVER_LICENSE_TYPES,
-      label: "Driver's license",
-    })
-    const resume = validateUpload(body.resume, {
-      allowedTypes: ALLOWED_RESUME_TYPES,
-      label: 'Resume',
-    })
-
-    if (!driverLicense) {
-      json(res, 400, { error: "Please upload a driver's license." })
-      return
-    }
+    const resume = validateResume(body.resume)
+    const identityDocument = validateIdentityDocument(body.identityDocument)
 
     if (!resume) {
       json(res, 400, { error: 'Please upload a resume.' })
+      return
+    }
+
+    if ((resume?.size || 0) + identityDocument.size > MAX_COMBINED_UPLOAD_SIZE) {
+      json(res, 400, { error: 'Resume and ID files must be 3 MB or smaller in total.' })
       return
     }
 
@@ -244,10 +307,10 @@ export default async function handler(req, res) {
       ...application,
       firstName: firstName(application.name),
       message: application.message,
-      licenseNumber: application.licenseNumber,
-      licenseExpiration: application.licenseExpiration,
-      driverLicenseName: driverLicense?.name || "No driver's license uploaded",
+      licenseNumber: application.licenseNumber || 'Not provided',
+      licenseExpiration: application.licenseExpiration || 'Not provided',
       resumeName: resume?.name || 'No resume uploaded',
+      identityDocumentName: identityDocument.name,
       submittedAt,
       source: 'Careers Page',
     }
@@ -258,18 +321,20 @@ export default async function handler(req, res) {
       content: applicationPdf.toString('base64'),
     }
 
-    const attachments = resume
-      ? [
-          {
-            filename: driverLicense.name,
-            content: driverLicense.content,
-          },
+    const recruiterDocuments = [
+      ...(resume
+        ? [
           {
             filename: resume.name,
             content: resume.content,
           },
-        ]
-      : []
+          ]
+        : []),
+      {
+        filename: identityDocument.name,
+        content: identityDocument.content,
+      },
+    ]
 
     await sendEmail(apiKey, {
       from: FROM_EMAIL,
@@ -293,12 +358,14 @@ export default async function handler(req, res) {
         'A new candidate submitted an application through the Careers page.',
         'See the attached application PDF for the full submission details.',
       ].join('\n'),
-      attachments: [applicationPdfAttachment, ...attachments],
+      attachments: [applicationPdfAttachment, ...recruiterDocuments],
     })
 
     json(res, 200, { ok: true })
   } catch (error) {
     console.error(error)
-    json(res, 500, { error: error.message || 'Unable to submit application.' })
+    json(res, error instanceof UploadValidationError ? 400 : 500, {
+      error: error.message || 'Unable to submit application.',
+    })
   }
 }
