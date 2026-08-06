@@ -159,6 +159,9 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Email address', application.email, left, y, col)
   drawField(doc, 'Location', `${display(application.city)}, ${display(application.state)}`, left + col + gap, y, col)
   y += fieldHeight + rowGap
+  drawField(doc, 'Home address', application.homeAddress, left, y, 504)
+
+  y += fieldHeight + 24
   drawField(doc, 'SSN or ITIN', application.taxpayerIdType, left, y, col)
   drawField(doc, 'SSN or ITIN number', application.taxpayerId, left + col + gap, y, col)
 
@@ -195,6 +198,21 @@ export async function createApplicationPdf(application, options = {}) {
   y += fieldHeight + rowGap
   drawField(doc, 'Authorized to work in the US', application.workAuthorized, left, y, col)
   drawField(doc, 'Can perform essential duties', application.essentialDuties, left + col + gap, y, col)
+
+  y += fieldHeight + 24
+  y = ensureSpace(doc, y, 280)
+  drawSectionTitle(doc, 'ADP Demographic', y)
+  y += 26
+  drawField(doc, 'Status', application.adpStatus, left, y, col)
+  drawField(doc, 'Date of birth', application.dob, left, y, col)
+  drawField(doc, 'Federal filing status', application.federalFilingStatus, left, y, col)
+  drawField(doc, 'Federal allowances', application.federalAllowances, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Federal additional amount', application.federalAdditionalAmount, left, y, col)
+  drawField(doc, 'State filing status', application.stateFilingStatus, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'State allowances', application.stateAllowances, left, y, col)
+  drawField(doc, 'State additional amount', application.stateAdditionalAmount, left + col + gap, y, col)
 
   y += fieldHeight + 24
   y = ensureSpace(doc, y, 300)

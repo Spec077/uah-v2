@@ -22,11 +22,12 @@ const ArrowRightIcon = () => (
 )
 
 const applicationSteps = [
-  { eyebrow: 'Step 1 of 5', title: 'Basic Information' },
-  { eyebrow: 'Step 2 of 5', title: 'Availability' },
-  { eyebrow: 'Step 3 of 5', title: 'Qualifications' },
-  { eyebrow: 'Step 4 of 5', title: 'Experience' },
-  { eyebrow: 'Step 5 of 5', title: 'Documents & Agreement' },
+  { eyebrow: 'Step 1 of 6', title: 'Basic Information' },
+  { eyebrow: 'Step 2 of 6', title: 'Availability' },
+  { eyebrow: 'Step 3 of 6', title: 'Qualifications' },
+  { eyebrow: 'Step 4 of 6', title: 'Experience' },
+  { eyebrow: 'Step 5 of 6', title: 'Documents & Agreement' },
+  { eyebrow: 'Step 6 of 6', title: 'ADP Demographic' },
 ]
 
 const shiftOptions = ['Days', 'Evenings', 'Overnights', 'Weekdays', 'Weekends', 'Holidays', 'On-call']
@@ -35,6 +36,14 @@ const careExperienceOptions = [
   'Home health', 'Pediatric care', 'Geriatric care', 'Ventilator / tracheostomy care',
   'Medication administration', 'Wound care', 'Activities of daily living', 'Hospice',
   'Behavioral health', 'Facility / hospital care',
+]
+
+const filingStatusOptions = [
+  'Single',
+  'Married filing jointly',
+  'Married filing separately',
+  'Head of household',
+  'Qualifying surviving spouse',
 ]
 
 const applicationSuccessAnimation =
@@ -535,6 +544,7 @@ function Careers() {
         email: String(formData.get('email') || '').trim(),
         city: String(formData.get('city') || '').trim(),
         state: String(formData.get('state') || '').trim(),
+        homeAddress: String(formData.get('homeAddress') || '').trim(),
         taxpayerIdType: String(formData.get('taxpayerIdType') || '').trim(),
         taxpayerId: String(formData.get('taxpayerId') || '').trim(),
         role: String(formData.get('role') || '').trim(),
@@ -569,6 +579,14 @@ function Careers() {
         referencePhone: String(formData.get('referencePhone') || '').trim(),
         referenceEmail: String(formData.get('referenceEmail') || '').trim(),
         referralSource: String(formData.get('referralSource') || '').trim(),
+        adpStatus: String(formData.get('adpStatus') || 'Active').trim(),
+        dob: String(formData.get('dob') || '').trim(),
+        federalFilingStatus: String(formData.get('federalFilingStatus') || '').trim(),
+        federalAllowances: String(formData.get('federalAllowances') || '').trim(),
+        federalAdditionalAmount: String(formData.get('federalAdditionalAmount') || '').trim(),
+        stateFilingStatus: String(formData.get('stateFilingStatus') || '').trim(),
+        stateAllowances: String(formData.get('stateAllowances') || '').trim(),
+        stateAdditionalAmount: String(formData.get('stateAdditionalAmount') || '').trim(),
         accuracyCertified: formData.get('accuracyCertified') === 'on' ? 'Yes' : '',
         privacyPolicyAccepted: formData.get('privacyPolicyAccepted') === 'on' ? 'Yes' : '',
         message: String(formData.get('message') || '').trim(),
@@ -848,6 +866,16 @@ function Careers() {
                             </option>
                           ))}
                         </select>
+                      </label>
+                      <label className="form-grid-wide">
+                        <span>Home address</span>
+                        <input
+                          name="homeAddress"
+                          type="text"
+                          autoComplete="street-address"
+                          placeholder="Street address, apartment, city, state, and ZIP"
+                          required
+                        />
                       </label>
                       <label>
                         <span>How did you hear about us?</span>
@@ -1168,6 +1196,61 @@ function Careers() {
                           I have read and accept the privacy policy and agree that United Ace Healthcare may use my
                           information to review and respond to my application.
                         </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`careers-form__group application-step-panel${applicationStep === 5 ? ' is-active' : ''}`}
+                    data-application-step="5"
+                  >
+                    <h3>ADP Demographic</h3>
+                    <p className="adp-step-note form-grid-wide">
+                      DOB and tax withholding details are required here. Employer-completed payroll fields are handled after review.
+                    </p>
+                    <input name="adpStatus" type="hidden" value="Active" />
+                    <div className="form-grid">
+                      <label>
+                        <span>Date of birth</span>
+                        <input name="dob" type="date" autoComplete="bday" required />
+                      </label>
+                      <label>
+                        <span>Federal filing status</span>
+                        <select name="federalFilingStatus" defaultValue="" required>
+                          <option value="">Select filing status</option>
+                          {filingStatusOptions.map((option) => (
+                            <option value={option} key={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Federal allowances</span>
+                        <input name="federalAllowances" type="text" inputMode="numeric" placeholder="0" required />
+                      </label>
+                      <label>
+                        <span>Federal additional amount</span>
+                        <input name="federalAdditionalAmount" type="text" inputMode="decimal" placeholder="0.00" required />
+                      </label>
+                      <label>
+                        <span>State filing status</span>
+                        <select name="stateFilingStatus" defaultValue="" required>
+                          <option value="">Select filing status</option>
+                          {filingStatusOptions.map((option) => (
+                            <option value={option} key={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>State allowances</span>
+                        <input name="stateAllowances" type="text" inputMode="numeric" placeholder="0" required />
+                      </label>
+                      <label>
+                        <span>State additional amount</span>
+                        <input name="stateAdditionalAmount" type="text" inputMode="decimal" placeholder="0.00" required />
                       </label>
                     </div>
                   </div>

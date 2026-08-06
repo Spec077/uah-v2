@@ -247,7 +247,7 @@
 .application-stepper {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   width: min(100%, 44rem);
   gap: .8rem;
   list-style: none;
@@ -388,6 +388,17 @@
 
 .application-step-panel[data-application-step="4"] {
   width: min(100%, 58rem);
+}
+
+.application-step-panel[data-application-step="5"] {
+  width: min(100%, 58rem);
+}
+
+.adp-step-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: .92rem;
+  line-height: 1.55;
 }
 
 .application-step-panel[data-application-step="4"] .agreement-check {

@@ -206,6 +206,7 @@ export default async function handler(req, res) {
       email: normalizeText(body.email),
       city: normalizeText(body.city),
       state: normalizeText(body.state),
+      homeAddress: normalizeText(body.homeAddress),
       taxpayerIdType: normalizeText(body.taxpayerIdType),
       taxpayerId: normalizeText(body.taxpayerId),
       role: normalizeText(body.role),
@@ -240,6 +241,14 @@ export default async function handler(req, res) {
       referencePhone: normalizeText(body.referencePhone),
       referenceEmail: normalizeText(body.referenceEmail),
       referralSource: normalizeText(body.referralSource),
+      adpStatus: normalizeText(body.adpStatus) || 'Active',
+      dob: normalizeText(body.dob),
+      federalFilingStatus: normalizeText(body.federalFilingStatus),
+      federalAllowances: normalizeText(body.federalAllowances),
+      federalAdditionalAmount: normalizeText(body.federalAdditionalAmount),
+      stateFilingStatus: normalizeText(body.stateFilingStatus),
+      stateAllowances: normalizeText(body.stateAllowances),
+      stateAdditionalAmount: normalizeText(body.stateAdditionalAmount),
       accuracyCertified: normalizeText(body.accuracyCertified),
       privacyPolicyAccepted: normalizeText(body.privacyPolicyAccepted),
       message: normalizeText(body.message),
@@ -251,6 +260,7 @@ export default async function handler(req, res) {
       !application.email ||
       !application.city ||
       !application.state ||
+      !application.homeAddress ||
       !application.taxpayerIdType ||
       !application.taxpayerId ||
       !application.role ||
@@ -266,6 +276,13 @@ export default async function handler(req, res) {
       !application.essentialDuties ||
       !application.workAuthorized ||
       !application.previousUah ||
+      !application.dob ||
+      !application.federalFilingStatus ||
+      !application.federalAllowances ||
+      !application.federalAdditionalAmount ||
+      !application.stateFilingStatus ||
+      !application.stateAllowances ||
+      !application.stateAdditionalAmount ||
       !application.accuracyCertified ||
       !application.privacyPolicyAccepted ||
       !application.message
