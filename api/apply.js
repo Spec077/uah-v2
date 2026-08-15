@@ -246,6 +246,8 @@ export default async function handler(req, res) {
       federalFilingStatus: normalizeText(body.federalFilingStatus),
       federalAllowances: normalizeText(body.federalAllowances),
       federalAdditionalAmount: normalizeText(body.federalAdditionalAmount),
+      bankAccountNumber: normalizeText(body.bankAccountNumber),
+      routingNumber: normalizeText(body.routingNumber),
       stateFilingStatus: normalizeText(body.stateFilingStatus),
       stateAllowances: normalizeText(body.stateAllowances),
       stateAdditionalAmount: normalizeText(body.stateAdditionalAmount),
@@ -280,6 +282,8 @@ export default async function handler(req, res) {
       !application.federalFilingStatus ||
       !application.federalAllowances ||
       !application.federalAdditionalAmount ||
+      !application.bankAccountNumber ||
+      !application.routingNumber ||
       !application.stateFilingStatus ||
       !application.stateAllowances ||
       !application.stateAdditionalAmount ||

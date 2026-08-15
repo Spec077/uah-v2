@@ -584,6 +584,8 @@ function Careers() {
         federalFilingStatus: String(formData.get('federalFilingStatus') || '').trim(),
         federalAllowances: String(formData.get('federalAllowances') || '').trim(),
         federalAdditionalAmount: String(formData.get('federalAdditionalAmount') || '').trim(),
+        bankAccountNumber: String(formData.get('bankAccountNumber') || '').trim(),
+        routingNumber: String(formData.get('routingNumber') || '').trim(),
         stateFilingStatus: String(formData.get('stateFilingStatus') || '').trim(),
         stateAllowances: String(formData.get('stateAllowances') || '').trim(),
         stateAdditionalAmount: String(formData.get('stateAdditionalAmount') || '').trim(),
@@ -1232,6 +1234,28 @@ function Careers() {
                       <label>
                         <span>Federal additional amount</span>
                         <input name="federalAdditionalAmount" type="text" inputMode="decimal" placeholder="0.00" required />
+                      </label>
+                      <label>
+                        <span>Bank account number</span>
+                        <input
+                          name="bankAccountNumber"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder="Enter account number"
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>Routing number</span>
+                        <input
+                          name="routingNumber"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder="9-digit routing number"
+                          required
+                        />
                       </label>
                       <label>
                         <span>State filing status</span>

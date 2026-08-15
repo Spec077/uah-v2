@@ -209,6 +209,9 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Federal allowances', application.federalAllowances, left + col + gap, y, col)
   y += fieldHeight + rowGap
   drawField(doc, 'Federal additional amount', application.federalAdditionalAmount, left, y, col)
+  drawField(doc, 'Bank account number', application.bankAccountNumber, left + col + gap, y, col)
+  y += fieldHeight + rowGap
+  drawField(doc, 'Routing number', application.routingNumber, left, y, col)
   drawField(doc, 'State filing status', application.stateFilingStatus, left + col + gap, y, col)
   y += fieldHeight + rowGap
   drawField(doc, 'State allowances', application.stateAllowances, left, y, col)
