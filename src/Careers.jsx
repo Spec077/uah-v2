@@ -142,7 +142,33 @@ const allowedIdTypes = new Set([
   'image/heic',
   'image/heif',
 ])
-const taxpayerIdPattern = '(?!000|666|9\\d{2})\\d{3}-(?!00)\\d{2}-(?!0000)\\d{4}|9\\d{2}-(?:7\\d|8\\d|9[0-2]|9[4-9])-\\d{4}'
+function normalizeTaxpayerId(value) {
+  return String(value ?? '').replace(/\D/g, '').slice(0, 9)
+}
+
+function isTaxpayerId(value) {
+  const digits = normalizeTaxpayerId(value)
+
+  if (!/^\d{9}$/.test(digits)) {
+    return false
+  }
+
+  const area = digits.slice(0, 3)
+  const group = digits.slice(3, 5)
+  const serial = digits.slice(5, 9)
+
+  const isValidSsn =
+    /^(?!000|666)\d{3}$/.test(area) &&
+    /^(?!00)\d{2}$/.test(group) &&
+    /^(?!0000)\d{4}$/.test(serial)
+
+  const isValidItin =
+    /^9\d{2}$/.test(area) &&
+    /^(?:7\d|8\d|9[0-2]|9[4-9])$/.test(group) &&
+    /^\d{4}$/.test(serial)
+
+  return isValidSsn || isValidItin
+}
 
 function fileToBase64(file, label) {
   return new Promise((resolve, reject) => {
@@ -159,7 +185,7 @@ function fileToBase64(file, label) {
 }
 
 function formatTaxpayerId(value) {
-  const digits = value.replace(/\D/g, '').slice(0, 9)
+  const digits = normalizeTaxpayerId(value)
   const parts = [digits.slice(0, 3), digits.slice(3, 5), digits.slice(5, 9)].filter(Boolean)
 
   return parts.join('-')
@@ -536,6 +562,11 @@ function Careers() {
 
       if ((resume?.size || 0) + (identityDocument?.size || 0) > maxCombinedUploadSize) {
         throw new Error('Resume and ID files must be 3 MB or smaller in total.')
+      }
+
+      const taxpayerId = String(formData.get('taxpayerId') || '').trim()
+      if (!isTaxpayerId(taxpayerId)) {
+        throw new Error('Please enter a valid SSN or ITIN in the format 123-45-6789.')
       }
 
       const payload = {
@@ -1153,7 +1184,6 @@ function Careers() {
                           type="text"
                           autoComplete="off"
                           inputMode="numeric"
-                          pattern={taxpayerIdPattern}
                           placeholder="123-45-6789"
                           title="Enter a valid SSN or ITIN in the format 123-45-6789."
                           value={taxpayerIdValue}

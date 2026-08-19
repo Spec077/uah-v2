@@ -20,9 +20,6 @@ const ALLOWED_ID_TYPES = new Set([
   'image/heic',
   'image/heif',
 ])
-const TAXPAYER_ID_PATTERN =
-  /^(?:(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}|9\d{2}-(?:7\d|8\d|9[0-2]|9[4-9])-\d{4})$/
-
 const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
 const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
 
@@ -78,8 +75,32 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+function normalizeTaxpayerId(value) {
+  return String(value ?? '').replace(/\D/g, '').slice(0, 9)
+}
+
 function isTaxpayerId(value) {
-  return TAXPAYER_ID_PATTERN.test(value)
+  const digits = normalizeTaxpayerId(value)
+
+  if (!/^\d{9}$/.test(digits)) {
+    return false
+  }
+
+  const area = digits.slice(0, 3)
+  const group = digits.slice(3, 5)
+  const serial = digits.slice(5, 9)
+
+  const isValidSsn =
+    /^(?!000|666)\d{3}$/.test(area) &&
+    /^(?!00)\d{2}$/.test(group) &&
+    /^(?!0000)\d{4}$/.test(serial)
+
+  const isValidItin =
+    /^9\d{2}$/.test(area) &&
+    /^(?:7\d|8\d|9[0-2]|9[4-9])$/.test(group) &&
+    /^\d{4}$/.test(serial)
+
+  return isValidSsn || isValidItin
 }
 
 async function readBody(req) {
