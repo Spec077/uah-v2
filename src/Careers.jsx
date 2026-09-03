@@ -135,6 +135,7 @@ const allowedResumeTypes = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const allowedResumeExtensions = new Set(['pdf', 'doc', 'docx'])
 const allowedIdTypes = new Set([
   'application/pdf',
   'image/jpeg',
@@ -531,7 +532,11 @@ function Careers() {
           throw new Error('Resume must be 3 MB or smaller.')
         }
 
-        if (!allowedResumeTypes.has(resumeFile.type)) {
+        const resumeExtension = resumeFile.name.split('.').pop()?.toLowerCase()
+        const hasAllowedResumeType = allowedResumeTypes.has(resumeFile.type)
+        const hasAllowedResumeExtension = allowedResumeExtensions.has(resumeExtension)
+
+        if (!hasAllowedResumeType && !hasAllowedResumeExtension) {
           throw new Error('Resume must be a PDF, DOC, or DOCX file.')
         }
 
@@ -1192,8 +1197,9 @@ function Careers() {
                         />
                       </label>
                       <label className="resume-upload">
-                        <span>Upload resume (PDF, DOC, DOCX)</span>
-                        <input name="resume" type="file" accept=".pdf,.doc,.docx" required />
+                        <span>Upload resume (optional — PDF, DOC, DOCX)</span>
+                        <input name="resume" type="file" accept=".pdf,.doc,.docx" />
+                        <small>You can submit your application without a resume.</small>
                       </label>
                       <label className="resume-upload">
                         <span>Driver's license or state-issued ID (PDF or image)</span>
@@ -1206,7 +1212,7 @@ function Careers() {
                         <small>Required for credentialing. Your ID is sent only to the recruiting team.</small>
                       </label>
                       <p className="form-grid-wide upload-limit-note">
-                        Each file may be up to 3 MB; both files together must be 3 MB or less.
+                        Each uploaded file may be up to 3 MB; uploaded files together must be 3 MB or less.
                       </p>
                       <label>
                         <span>Additional notes</span>

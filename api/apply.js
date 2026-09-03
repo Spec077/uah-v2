@@ -13,6 +13,7 @@ const ALLOWED_RESUME_TYPES = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
+const ALLOWED_RESUME_EXTENSIONS = new Set(['pdf', 'doc', 'docx'])
 const ALLOWED_ID_TYPES = new Set([
   'application/pdf',
   'image/jpeg',
@@ -140,7 +141,9 @@ function validateResume(resume) {
     throw new UploadValidationError('Resume must be 3 MB or smaller.')
   }
 
-  if (!ALLOWED_RESUME_TYPES.has(type)) {
+  const extension = name.split('.').pop()?.toLowerCase()
+
+  if (!ALLOWED_RESUME_TYPES.has(type) && !ALLOWED_RESUME_EXTENSIONS.has(extension)) {
     throw new UploadValidationError('Resume must be a PDF, DOC, or DOCX file.')
   }
 
@@ -329,13 +332,8 @@ export default async function handler(req, res) {
     const resume = validateResume(body.resume)
     const identityDocument = validateIdentityDocument(body.identityDocument)
 
-    if (!resume) {
-      json(res, 400, { error: 'Please upload a resume.' })
-      return
-    }
-
     if ((resume?.size || 0) + identityDocument.size > MAX_COMBINED_UPLOAD_SIZE) {
-      json(res, 400, { error: 'Resume and ID files must be 3 MB or smaller in total.' })
+      json(res, 400, { error: 'Uploaded files must be 3 MB or smaller in total.' })
       return
     }
 

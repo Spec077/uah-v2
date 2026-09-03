@@ -200,11 +200,12 @@ export async function createApplicationPdf(application, options = {}) {
   drawField(doc, 'Can perform essential duties', application.essentialDuties, left + col + gap, y, col)
 
   y += fieldHeight + 24
-  y = ensureSpace(doc, y, 280)
+  y = ensureSpace(doc, y, 330)
   drawSectionTitle(doc, 'ADP Demographic', y)
   y += 26
   drawField(doc, 'Status', application.adpStatus, left, y, col)
-  drawField(doc, 'Date of birth', application.dob, left, y, col)
+  drawField(doc, 'Date of birth', application.dob, left + col + gap, y, col)
+  y += fieldHeight + rowGap
   drawField(doc, 'Federal filing status', application.federalFilingStatus, left, y, col)
   drawField(doc, 'Federal allowances', application.federalAllowances, left + col + gap, y, col)
   y += fieldHeight + rowGap
