@@ -143,6 +143,7 @@ const allowedIdTypes = new Set([
   'image/heic',
   'image/heif',
 ])
+const allowedIdExtensions = new Set(['pdf', 'jpg', 'jpeg', 'png', 'heic', 'heif'])
 function normalizeTaxpayerId(value) {
   return String(value ?? '').replace(/\D/g, '').slice(0, 9)
 }
@@ -553,7 +554,8 @@ function Careers() {
           throw new Error("Driver's license or state-issued ID must be 3 MB or smaller.")
         }
 
-        if (!allowedIdTypes.has(identityDocumentFile.type)) {
+        const identityDocumentExtension = identityDocumentFile.name.split('.').pop()?.toLowerCase()
+        if (!allowedIdTypes.has(identityDocumentFile.type) && !allowedIdExtensions.has(identityDocumentExtension)) {
           throw new Error("Driver's license or state-issued ID must be a PDF, JPG, PNG, HEIC, or HEIF file.")
         }
 
@@ -620,8 +622,6 @@ function Careers() {
         federalFilingStatus: String(formData.get('federalFilingStatus') || '').trim(),
         federalAllowances: String(formData.get('federalAllowances') || '').trim(),
         federalAdditionalAmount: String(formData.get('federalAdditionalAmount') || '').trim(),
-        bankAccountNumber: String(formData.get('bankAccountNumber') || '').trim(),
-        routingNumber: String(formData.get('routingNumber') || '').trim(),
         stateFilingStatus: String(formData.get('stateFilingStatus') || '').trim(),
         stateAllowances: String(formData.get('stateAllowances') || '').trim(),
         stateAdditionalAmount: String(formData.get('stateAdditionalAmount') || '').trim(),
@@ -651,7 +651,7 @@ function Careers() {
       setApplicationStep(0)
       setApplicationStatus({
         type: 'success',
-        message: 'Application submitted. Please check your email for confirmation.',
+        message: 'Application submitted successfully.',
       })
     } catch (error) {
       setApplicationStatus({
@@ -831,7 +831,7 @@ function Careers() {
                 <div className="application-success__message">
                   <h3>Application submitted.</h3>
                   <p>
-                    Thank you for applying. We sent a confirmation email to your inbox, and our team will review your information.
+                    Thank you for applying. Our recruiting team received your application and will review your information.
                     If your qualifications match our current opportunities, our recruitment team will contact you with the next steps.
                   </p>
                 </div>
@@ -1270,28 +1270,6 @@ function Careers() {
                       <label>
                         <span>Federal additional amount</span>
                         <input name="federalAdditionalAmount" type="text" inputMode="decimal" placeholder="0.00" required />
-                      </label>
-                      <label>
-                        <span>Bank account number</span>
-                        <input
-                          name="bankAccountNumber"
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          placeholder="Enter account number"
-                          required
-                        />
-                      </label>
-                      <label>
-                        <span>Routing number</span>
-                        <input
-                          name="routingNumber"
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          placeholder="9-digit routing number"
-                          required
-                        />
                       </label>
                       <label>
                         <span>State filing status</span>

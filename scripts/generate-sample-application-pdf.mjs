@@ -57,8 +57,6 @@ const sampleApplication = {
   stateFilingStatus: 'Single',
   stateAllowances: '1',
   stateAdditionalAmount: '0.00',
-  bankRoutingNumber: 'REDACTED FOR SAMPLE',
-  bankAccountNumber: 'REDACTED FOR SAMPLE',
   deductionPerPayPeriodOne: 'Child support - 50',
   deductionPerPayPeriodTwo: '401(k) - 25',
   accuracyCertified: 'Yes',

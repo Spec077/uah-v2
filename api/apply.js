@@ -21,6 +21,7 @@ const ALLOWED_ID_TYPES = new Set([
   'image/heic',
   'image/heif',
 ])
+const ALLOWED_ID_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png', 'heic', 'heif'])
 const applicantTemplate = readFileSync(new URL('../applicant-confirmation.html', import.meta.url), 'utf8')
 const recruiterTemplate = readFileSync(new URL('../recruiter-notification.html', import.meta.url), 'utf8')
 
@@ -168,7 +169,10 @@ function validateIdentityDocument(document) {
     throw new UploadValidationError("Driver's license or state-issued ID must be 3 MB or smaller.")
   }
 
-  if (!ALLOWED_ID_TYPES.has(type)) {
+  const extension = name.split('.').pop()?.toLowerCase()
+
+  // Some mobile browsers leave the MIME type blank for HEIC/HEIF camera uploads.
+  if (!ALLOWED_ID_TYPES.has(type) && !ALLOWED_ID_EXTENSIONS.has(extension)) {
     throw new UploadValidationError("Driver's license or state-issued ID must be a PDF, JPG, PNG, HEIC, or HEIF file.")
   }
 
@@ -270,8 +274,6 @@ export default async function handler(req, res) {
       federalFilingStatus: normalizeText(body.federalFilingStatus),
       federalAllowances: normalizeText(body.federalAllowances),
       federalAdditionalAmount: normalizeText(body.federalAdditionalAmount),
-      bankAccountNumber: normalizeText(body.bankAccountNumber),
-      routingNumber: normalizeText(body.routingNumber),
       stateFilingStatus: normalizeText(body.stateFilingStatus),
       stateAllowances: normalizeText(body.stateAllowances),
       stateAdditionalAmount: normalizeText(body.stateAdditionalAmount),
@@ -306,8 +308,6 @@ export default async function handler(req, res) {
       !application.federalFilingStatus ||
       !application.federalAllowances ||
       !application.federalAdditionalAmount ||
-      !application.bankAccountNumber ||
-      !application.routingNumber ||
       !application.stateFilingStatus ||
       !application.stateAllowances ||
       !application.stateAdditionalAmount ||
@@ -376,16 +376,8 @@ export default async function handler(req, res) {
       },
     ]
 
-    await sendEmail(apiKey, {
-      from: FROM_EMAIL,
-      to: [application.email],
-      reply_to: RECRUITER_EMAIL,
-      subject: 'We received your United Ace Healthcare application',
-      html: renderTemplate(applicantTemplate, values),
-      text: `Hi ${values.firstName},\n\nWe received your application for ${application.role}. Our team will review your information and contact you if your background matches a current opening.\n\nUnited Ace Healthcare`,
-      attachments: [applicationPdfAttachment],
-    })
-
+    // Deliver the application before the courtesy confirmation. A bounced or
+    // suppressed applicant address must not discard an otherwise valid application.
     await sendEmail(apiKey, {
       from: FROM_EMAIL,
       to: [RECRUITER_EMAIL],
@@ -400,6 +392,20 @@ export default async function handler(req, res) {
       ].join('\n'),
       attachments: [applicationPdfAttachment, ...recruiterDocuments],
     })
+
+    try {
+      await sendEmail(apiKey, {
+        from: FROM_EMAIL,
+        to: [application.email],
+        reply_to: RECRUITER_EMAIL,
+        subject: 'We received your United Ace Healthcare application',
+        html: renderTemplate(applicantTemplate, values),
+        text: `Hi ${values.firstName},\n\nWe received your application for ${application.role}. Our team will review your information and contact you if your background matches a current opening.\n\nUnited Ace Healthcare`,
+        attachments: [applicationPdfAttachment],
+      })
+    } catch (confirmationError) {
+      console.error('Application saved, but applicant confirmation failed:', confirmationError)
+    }
 
     json(res, 200, { ok: true })
   } catch (error) {
