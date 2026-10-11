@@ -5,6 +5,7 @@ const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_EMAIL = 'UAH Careers <careers@unitedacehealthcare.com>'
 const RECRUITER_EMAIL = 'info@unitedacehealthcare.com'
 // const RECRUITER_EMAIL = 'boluwatifeobasa830@gmail.com'
+const APPLICATIONS_PAUSED = true
 const MAX_RESUME_SIZE = 3 * 1024 * 1024
 const MAX_ID_SIZE = 3 * 1024 * 1024
 const MAX_COMBINED_UPLOAD_SIZE = 3 * 1024 * 1024
@@ -219,6 +220,14 @@ export default async function handler(req, res) {
     return
   }
 
+  if (APPLICATIONS_PAUSED) {
+    json(res, 503, {
+      // error: 'Applications are temporarily unavailable. Please check back later.',
+      error: 'Internal server error. Please try again later.',
+    })
+    return
+  }
+
   const apiKey = process.env.RESEND_KEY
 
   if (!apiKey) {
@@ -227,6 +236,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    //failure part
     const body = await readBody(req)
     const application = {
       name: normalizeText(body.name),
